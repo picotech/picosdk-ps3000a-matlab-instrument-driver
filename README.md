@@ -20,13 +20,19 @@ This Instrument Driver package includes the following:
 
 The driver will work with the following PicoScope models:
 
-* PicoScope 3204A & B  
-* PicoScope 3205A & B   
-* PicoScope 3206A & B
-* PicoScope 3207A & B
-* PicoScope 3404A & B  
-* PicoScope 3405A & B   
-* PicoScope 3406A & B
+* PicoScope 3204A/B/D  
+* PicoScope 3205A/B/D   
+* PicoScope 3206A/B/D
+* PicoScope 3207A/B
+* PicoScope 3204MSO/D MSO 
+* PicoScope 3205MSO/D MSO   
+* PicoScope 3206MSO/D MSO
+* PicoScope 3404A/B/D  
+* PicoScope 3405A/B/D   
+* PicoScope 3406A/B/D
+* PicoScope 3404D MSO 
+* PicoScope 3405D MSO   
+* PicoScope 3406D MSO
 
 ## Getting started
 
@@ -34,6 +40,7 @@ The driver will work with the following PicoScope models:
 
 * [MATLAB](https://uk.mathworks.com/products/matlab.html) for Microsoft Windows (32- or 64-bit) or Linux operating systems (64-bit).
 * [Instrument Control Toolbox](http://www.mathworks.co.uk/products/instrument/)
+* The [PicoScope Support Toolbox](http://uk.mathworks.com/matlabcentral/fileexchange/53681-picoscope-support-toolbox)
 
 **Notes:**
 
@@ -53,7 +60,7 @@ Drivers are available for the following platforms. Refer to the subsections belo
 
 ### Programmer's Guides
 
-You can download the [Programmer's Guide](https://www.picotech.com/download/manuals/PicoScope3000SeriesAApiMatlabInstrumentDriverGuide.pdf) providing a description of the functions provided by this Instrument Driver.
+You can download the [Programmer's Guide](https://www.picotech.com/download/manuals/picoscope-3000-series-a-api-programmers-guide.pdf) providing a description of the API functions for the ps3000a shared library used by this Instrument Driver.
 
 ## Further information
 

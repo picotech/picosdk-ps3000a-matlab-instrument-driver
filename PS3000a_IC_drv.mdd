@@ -1,0 +1,1536 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MATLABInstrumentDriver>
+   <FileVersion>2.42</FileVersion>
+   <DriverName>PS3000a_IC_drv.mdd</DriverName>
+   <DriverType>MATLAB generic</DriverType>
+   <InstrumentType>Oscilloscope</InstrumentType>
+   <InstrumentManufacturer>Pico Technology Ltd.</InstrumentManufacturer>
+   <InstrumentModel>PicoScope 3000 Series</InstrumentModel>
+   <InstrumentVersion>1.2.1</InstrumentVersion>
+   <Identify/>
+   <Reset/>
+   <Selftest/>
+   <Error/>
+   <CreateInitCode>
+      <Code>function init(obj)
+% This function is called after the object is created.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+
+    if(ispc)
+        
+        loadlibrary('PS3000a.dll','PS3000aMFile')
+       
+    else
+        
+        if(~ismac)
+           
+            loadlibrary('libps3000a.so', 'PS3000aMFile', 'alias', 'PS3000a');
+            
+        end
+        
+    end
+    %check if the library is loaded
+    if ~libisloaded('PS3000a')
+        error('library PS3000a.dll or PS3000aMFile not found') 
+    end
+
+    if(ispc)
+    
+        loadlibrary('ps3000aWrap.dll','ps3000aWrapMFile')
+        
+    else
+       
+        if(~ismac)
+           
+            loadlibrary('libps3000aWrap.so', 'ps3000aWrapMFile', 'alias', 'ps3000aWrap');
+            
+        end
+        
+    end
+        
+    %check if the library is loaded
+    if ~libisloaded('ps3000aWrap')
+        error('library ps3000aWrap.dll or ps3000aWrapMFile not found') 
+    end</Code>
+   </CreateInitCode>
+   <ConnectInitCode>
+      <Type>MCode</Type>
+      <Code>function connect_status = init(obj)
+% This function is called after the object is connected.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+
+disp('Opening device...');
+
+connect_status = [];
+
+handle = 0;
+
+% Obtain the serial input
+serialNum = get(obj, 'RsrcName');
+
+% Determine if serial number specified or null
+if length(serialNum) &gt; 0
+    
+    unitSerial = serialNum;
+    
+else
+    
+    unitSerial = [];
+    
+end
+
+[connect_status.open_unit, obj.UserData.unithandle, obj.UserData.unitserial] = ...
+    calllib('PS3000a', 'ps3000aOpenUnit', handle, unitSerial);
+
+% Check Power Settings
+
+power_status = 0;
+
+% Check if DC power not connected (340X A/B) or USB 3.0 on USB 2.0
+% (3207A/B)
+if(connect_status.open_unit == 282 || connect_status.open_unit == 286) % Power supply not connected
+   
+    power_status = invoke(obj, 'ps3000aChangePowerSource', ...
+        connect_status.open_unit);
+    
+end
+
+% Set handle and serial 
+% Unit connected if 0 or power supply not connected
+if(connect_status.open_unit == 0 || power_status == 0)
+    
+    % Display object information
+    obj
+    
+    disp('Connected to PicoScope device:-');
+    disp('');
+    %disp('Setting handle...');
+    handle = obj.UserData.unithandle;
+    set(obj, 'unithandle', obj.UserData.unithandle);
+    fprintf('Handle: %d\n', handle);
+
+    info_line = '           ';
+    req_size = 15;
+
+    [connect_status.unit_serial, unitSerial, req_size]  = calllib('PS3000a', ...
+            'ps3000aGetUnitInfo', handle, info_line, ... 
+            length(info_line), req_size, 4);
+
+    %disp('Setting device serial number...');
+    set(obj, 'unitserial', unitSerial);
+    fprintf('Batch/Serial number: %s\n', unitSerial);
+
+    % Set variant and channel count information
+    %disp('Setting variant and channel count...')
+
+    info_line_v = '               ';
+    req_size_v = 15;
+
+    [connect_status.unit_variant, variant, req_size_v]  = calllib('PS3000a', ...
+            'ps3000aGetUnitInfo', handle, info_line_v, ... 
+            length(info_line_v), req_size_v, 3);
+
+    set(obj, 'InstrumentModel', variant);
+    fprintf('InstrumentModel: %s\n', get(obj, 'InstrumentModel'));
+
+    %ch = get(obj, 'channelCount');
+    set(obj, 'channelCount', str2num(variant(2)));
+    %num_channels = get(obj, 'channelCount');
+    fprintf('Number of channels: %d\n', get(obj, 'channelCount'));
+
+    % Set min and max range
+
+    obj.UserData.firstRange = 2; % 50mV
+    obj.UserData.lastRange = 10; % 20V
+
+    set(obj, 'firstRange', obj.UserData.firstRange); 
+    set(obj, 'lastRange', obj.UserData.lastRange); 
+
+    fprintf('Signal Generator type: ');
+
+    obj.UserData.sigGenType = 0;
+    obj.UserData.awgBufferSize = 0;
+
+    % Set Function Generator type
+    switch (variant(end))
+
+        case 'A'
+            obj.UserData.sigGenType = 1;
+            fprintf('Function Generator\n');
+            obj.UserData.awgBufferSize = 0;
+
+        case 'B'
+            obj.UserData.sigGenType = 2;
+            fprintf('Arbitrary Waveform Generator\n');
+
+            if(strcmpi((variant), '3206B') || strcmpi((variant), '3406B'))
+
+                % buffer size = 16384
+                obj.UserData.awgBufferSize = power(2,14);
+
+            else
+
+                % buffer size = 8192
+                obj.UserData.awgBufferSize = power(2,13);
+            end
+
+        otherwise
+            obj.UserData.sigGenType = 0;
+            fprintf('None');
+            obj.UserData.awgBufferSize = 0;
+
+    end
+
+    set(obj, 'sigGenType', obj.UserData.sigGenType);
+    set(obj, 'awgBufferSize', obj.UserData.awgBufferSize);
+    
+    if(get(obj, 'channelCount') == 4)
+        
+        current_power_status = calllib('PS3000a', 'ps3000aCurrentPowerSource', ...
+                                    obj.UserData.unithandle);
+        
+        if(current_power_status == 281)
+        
+            fprintf('Power Supply connected: True\n');
+       
+        else
+        
+            fprintf('Power Supply connected: False\n');
+        
+        end
+        
+    end
+
+    % Display status
+    connect_status
+    
+elseif(connect_status.open_unit == 3)
+    
+    disp('ERROR:- Status code 3 - No unit found, please check connections.');
+    
+else
+    
+    fprintf('ERROR:- Status code: 0x%X\n', connect_status.open_unit);
+    
+end</Code>
+   </ConnectInitCode>
+   <CleanupCode>
+      <Type>MCode</Type>
+      <Code>function disconnect_status = cleanup(obj)
+% This function is called before the object is disconnected.
+% OBJ is the device object.
+% End of function definition - DO NOT EDIT
+
+unithandle = get(obj, 'unithandle');
+    
+if ( isempty(unithandle) ) 
+    % If no unithandle, return without doing anything
+    return;
+end
+    
+% Disconnect Code:
+
+disconnect_status = calllib('PS3000a', 'ps3000aCloseUnit', unithandle);
+
+fprintf('Close unit status: %d\n', disconnect_status);
+
+unloadlibrary('ps3000aWrap');
+unloadlibrary('PS3000a');
+
+if(disconnect_status == 0)
+    
+    disp('Libraries unloaded successfully.');
+    
+else
+   
+    disp('ERROR: Library unload not successful.');
+    
+end</Code>
+   </CleanupCode>
+   <GroupInfo>
+      <Group>
+         <Name>parent</Name>
+         <Description/>
+         <Command/>
+         <Size>1</Size>
+         <Mappings>
+            <ChannelMap Command="parent1" Index="1"/>
+         </Mappings>
+         <PropertyInfo>
+            <Property>
+               <Name>awgBufferSize</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If awgBufferSize doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'awgBufferSize') )
+    obj.UserData.awgBufferSize = 0;
+else
+    propertyValue = obj.UserData.awgBufferSize;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.awgBufferSize = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The size of the arbitrary waveform buffer on the device, in samples,</Description>
+            </Property>
+            <Property>
+               <Name>channelCount</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If channelCount doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'channelCount') )
+    obj.UserData.channelCount = [ ];
+end
+
+propertyValue = obj.UserData.channelCount;
+</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.channelCount = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The number of channels on the device.</Description>
+            </Property>
+            <Property>
+               <Name>firstRange</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If channelCount doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'firstRange') )
+    obj.UserData.firstRange = [ ];
+else
+    propertyValue = obj.UserData.firstRange;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.firstRange = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>50</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Lowest voltage range supported by the device (mV).</Description>
+            </Property>
+            <Property>
+               <Name>lastRange</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If channelCount doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'lastRange') )
+    obj.UserData.lastRange = [ ];
+else
+    propertyValue = obj.UserData.lastRange;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.lastRange = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>20000</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Highest voltage range supported by device (mV).</Description>
+            </Property>
+            <Property>
+               <Name>maxValue</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If maxValue doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'maxValue') )
+    obj.UserData.maxValue = 0;
+else
+    propertyValue = obj.UserData.maxValue;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.maxValue = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The maximum ADC count value.</Description>
+            </Property>
+            <Property>
+               <Name>minValue</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If maxValue doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'minValue') )
+    obj.UserData.minValue = 0;
+else
+    propertyValue = obj.UserData.minValue;
+end
+</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.minValue = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The minimum ADC count value.</Description>
+            </Property>
+            <Property>
+               <Name>ps3000aEnums</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Object</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Not used.</Description>
+            </Property>
+            <Property>
+               <Name>ps3000aStructs</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Object</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Not used.</Description>
+            </Property>
+            <Property>
+               <Name>sigGenType</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If sigGenType doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'sigGenType') )
+    obj.UserData.sigGenType = [ ];
+    
+else
+    
+     propertyValue = obj.UserData.sigGenType;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.sigGenType = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The type of Signal Generator on the device:
+
+0 - None
+1 - Function Generator
+2 - Arbitrary Waveform Generator</Description>
+            </Property>
+            <Property>
+               <Name>timebase</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If timebase doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'timebase') )
+    obj.UserData.timebase = 1;
+else
+    propertyValue = obj.UserData.timebase;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.timebase = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The timebase used for the scope - not used.</Description>
+            </Property>
+            <Property>
+               <Name>unithandle</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If UserData.unithandle doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'unithandle') )
+    obj.UserData.unithandle = [ ];
+else
+    propertyValue = obj.UserData.unithandle;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.unithandle = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue>0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>The handle for the device.</Description>
+            </Property>
+            <Property>
+               <Name>unitserial</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+% If UserData.unitserial doesn't exist, create it.
+if ( ~isfield(obj.UserData, 'unitserial') )
+    obj.UserData.unitserial = [ ];
+else
+    propertyValue = obj.UserData.unitserial;
+end</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+obj.UserData.unitserial = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>String</Type>
+                  <Constraint>none</Constraint>
+               </PermissibleType>
+               <DefaultValue/>
+               <ReadOnly>never</ReadOnly>
+               <Description>The device batch/serial number.</Description>
+            </Property>
+         </PropertyInfo>
+         <MethodInfo>
+            <Method>
+               <Name>AutoStopped</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function autoStop = AutoStopped(obj)
+
+autoStop = calllib('ps3000aWrap', 'AutoStopped', get(obj, 'unithandle'));</MCode>
+               </Code>
+               <Description>AutoStopped(obj) indicates if the device has stopped on collection of the number of samples specified in the call to the ps3000aRunStreaming function.</Description>
+            </Method>
+            <Method>
+               <Name>AvailableData</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [numSamples, startIndex] = AvailableData(obj)
+
+startIndex = 0; % Initialise variable to be used as a pointer
+
+[numSamples, startIndex] = calllib('ps3000aWrap', 'AvailableData', ...
+    get(obj, 'unithandle'), startIndex);</MCode>
+               </Code>
+               <Description>AvailableData(obj) indicates the number of samples returned from the driver and the start index of the data in the buffer when collecting data in streaming mode.</Description>
+            </Method>
+            <Method>
+               <Name>ClearTriggerReady</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function triggerCleared = ClearTriggerReady(obj)
+
+triggerCleared = calllib('ps3000aWrap', 'ClearTriggerReady');</MCode>
+               </Code>
+               <Description>ClearTriggerReady(obj) clears the triggered and triggeredAt flags in relation to streaming mode capture.</Description>
+            </Method>
+            <Method>
+               <Name>GetStreamingLatestValues</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = GetStreamingLatestValues(obj)
+
+status = calllib('ps3000aWrap', 'GetStreamingLatestValues', ...
+    get(obj, 'unithandle'));</MCode>
+               </Code>
+               <Description>GetStreamingLatestValues(obj) provides a wrapper function to communicate with the driver to return the next block of values to your application.</Description>
+            </Method>
+            <Method>
+               <Name>GetUnitInfo</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = GetUnitInfo(obj)
+
+unit_info = {'Driver: '; 'USB: '; 'HW: '; 'Variant: '; ...
+    'Batch &amp; Serial: '; 'Cal Date: '; 'Kernel: '; 'Digital HW: '; ...
+    'Analog HW: '};
+
+info_line = blanks(40);
+
+unit_info_values = cell(9,1);
+ 
+req_size = 40;
+
+status = zeros(9,1);
+
+% Loop through and put together information
+for n = 1:9
+     
+    [status(n,1), info_line1, req_size]  = calllib('PS3000a', ...
+        'ps3000aGetUnitInfo', get(obj, 'unithandle'), info_line, ... 
+        length(info_line), req_size,(n-1));
+    
+    unit_info_line = strcat(unit_info(n), info_line1);
+    unit_info_values(n) = cellstr(unit_info_line);
+        
+end
+
+unit_info_values</MCode>
+               </Code>
+               <Description>ps3000aGetUnitInfo(obj) retrieves information about the specified oscilloscope (for all types of information available).</Description>
+            </Method>
+            <Method>
+               <Name>IsReady</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function ready = IsReady(obj)
+% For group functions, OBJ is the group object. For
+% base device functions, OBJ is the device object.
+
+ready = calllib('ps3000aWrap', 'IsReady', get(obj, 'unithandle'));</MCode>
+               </Code>
+               <Description>IsReady(obj) is used to poll the driver to verify that data is ready to be received. Use this function when capturing data in streaming mode.</Description>
+            </Method>
+            <Method>
+               <Name>IsTriggerReady</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [triggered, triggeredAt] = IsTriggerReady(obj)
+
+triggeredAt = 0; % Initialise value to zero for pointer.
+
+[triggered, triggeredAt] = calllib('ps3000aWrap', 'IsTriggerReady', ...
+    get(obj, 'unithandle'), triggeredAt);</MCode>
+               </Code>
+               <Description>IsTriggerReady(obj) indicates whether a trigger has occurred when collecting data in streaming mode, and the location of the trigger point.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aChangePowerSource</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aChangePowerSource(obj, powerstate)
+
+status = calllib('PS3000a', 'ps3000aChangePowerSource', ...
+    get(obj, 'unithandle'), powerstate);</MCode>
+               </Code>
+               <Description>ps3000aChangePowerSource(obj, powerstate) is called to select the power supply mode.
+
+NOTE: Applies to 4-Channel 3000 A and B Series oscilloscopes only.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aCurrentPowerSource</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aCurrentPowerSource(obj)
+
+status = calllib('PS3000a', 'ps3000aCurrentPowerSource', ...
+    get(obj, 'unithandle'));</MCode>
+               </Code>
+               <Description>ps3000aCurrentPowerSource(obj) returns the current power state of the device.
+
+NOTE: Applies to 4-Channel 3000 A and B Series oscilloscopes only.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aFlashLed</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aFlashLed(obj, start)
+
+status = calllib('PS3000a', 'ps3000aFlashLed', get(obj, 'unithandle'), ...
+    start);</MCode>
+               </Code>
+               <Description>ps3000aFlashLed(obj, start) flashes the LED on the front of the scope without blocking the calling
+thread.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetAnalogueOffset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, maximumVoltage, minimumVoltage] = ps3000aGetAnalogueOffset(obj, range, coupling, maximumVoltage, minimumVoltage)
+
+[status, maximumVoltage, minimumVoltage] = calllib('PS3000a', ...
+    'ps3000aGetAnalogueOffset', get(obj, 'unithandle'), range, coupling, ...
+    maximumVoltage, minimumVoltage);</MCode>
+               </Code>
+               <Description>ps3000aGetAnalogueOffset(obj, range, coupling, maximumVoltage, minimumVoltage) is used to get the maximum and minimum allowable analogue offset for a specific voltage range.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetChannelInformation</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, ranges, length] = ps3000aGetChannelInformation(obj, info, ranges, length, channels)
+
+[status, ranges, length] = calllib('PS3000a', ...
+    'ps3000aGetChannelInformation', get(obj, 'unithandle'), info, 0, ranges, length, channels);</MCode>
+               </Code>
+               <Description>ps3000aGetChannelInformation(obj, info, ranges, length, channels) queries which ranges are available on a scope device.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetMaxDownSampleRatio</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, maxDownSampleRatio] = ps3000aGetMaxDownSampleRatio(obj, numUnaggregatedSamples, downSampleRatioMode, segmentIndex)
+
+maxDownSampleRatio = 0;        
+        
+[status, maxDownSampleRatio] = calllib('PS3000a', ...
+    'ps3000aGetMaxDownSampleRatio', get(obj, 'unithandle'), numUnaggregatedSamples, ...
+        maxDownSampleRatio, downSampleRatioMode, segmentIndex);</MCode>
+               </Code>
+               <Description>ps3000aGetMaxDownSampleRatio(obj, numUnaggregatedSamples, downSampleRatioMode, segmentIndex)
+returns the maximum downsampling ratio that can be used for a given number of samples in a given downsampling mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetMaxSegments</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, maxSegments] = ps3000aGetMaxSegments(obj)
+
+maxSegments = 0; % Passing pointer to function
+
+[status, maxSegments] = calllib('PS3000a', 'ps3000aGetMaxSegments', ...
+    get(obj, 'unithandle'), maxSegments);</MCode>
+               </Code>
+               <Description>ps3000aGetMaxSegments(obj) returns the maximum number of segments allowed for the opened device.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetNoOfCaptures</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, nCaptures] = ps3000aGetNoOfCaptures(obj)
+
+nCaptures = 0; % Pointer
+
+[status, nCaptures] = calllib('PS3000a', 'ps3000aGetNoOfCaptures', ...
+    get(obj, 'unithandle'), nCaptures);</MCode>
+               </Code>
+               <Description>ps3000aGetNoOfCaptures(obj) finds out how many captures are available in rapid block mode after ps3000aRunBlock has been called when either the collection completed or the collection of waveforms was interrupted by calling ps3000aStop.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetNoOfProcessedCaptures</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, nCaptures] = ps3000aGetNoOfProcessedCaptures(obj, nCaptures)
+
+[status, nCaptures] = calllib('PS3000a', 'ps3000aGetNoOfProcessedCaptures', ...
+    get(obj, 'unithandle'), nCaptures);</MCode>
+               </Code>
+               <Description>ps3000aGetNoOfProcessedCaptures(obj, nCaptures) finds out how many captures in rapid block mode have been processed after ps3000aRunBlock has been called when either the collection completed or the collection of waveforms was interrupted by calling ps3000aStop.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetTimebase</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, timeIntervalNanoSeconds, maxSamples] = ps3000aGetTimebase(obj, timebase, noSamples, timeIntervalNanoSeconds, oversample, maxSamples, segmentIndex)
+
+[status, timeIntervalNanoSeconds, maxSamples] = calllib('PS3000a', ...
+    'ps3000aGetTimebase', get(obj, 'unithandle'), timebase, noSamples, ...
+    timeIntervalNanoSeconds, oversample, maxSamples, segmentIndex);</MCode>
+               </Code>
+               <Description>ps3000aGetTimebase(obj, timebase, noSamples, timeIntervalNs, oversample, maxSamples, segmentIndex) calculates the sampling rate and maximum number of samples for a given timebase under the specified conditions.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetTimebase2</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, timeIntervalNanoSeconds, maxSamples] = ps3000aGetTimebase2(obj, timebase, noSamples, timeIntervalNanoSeconds, oversample, maxSamples, segmentIndex)
+
+[status, timeIntervalNanoSeconds, maxSamples] = calllib('PS3000a', ...
+    'ps3000aGetTimebase2', get(obj, 'unithandle'), timebase, noSamples, ...
+    timeIntervalNanoSeconds, oversample, maxSamples, segmentIndex);
+</MCode>
+               </Code>
+               <Description>ps3000aGetTimebase2(obj, timebase, noSamples, timeIntNs, oversample, maxSamples, segmentIndex) is an upgraded version of ps3000aGetTimebase, and returns the time interval as a float rather than a long. This allows it to return sub-nanosecond time intervals.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetTriggerTimeOffset</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, timeUpper, timeLower, timeUnits] = ps3000aGetTriggerTimeOffset(obj, timeUpper, timeLower, timeUnits, segmentIndex)
+
+[status, timeUpper, timeLower, timeUnits] = calllib('PS3000a', ...
+    'ps3000aGetTriggerTimeOffset', get(obj, 'unithandle'), timeUpper, timeLower, ...
+    timeUnits, segmentIndex);</MCode>
+               </Code>
+               <Description>ps3000aGetTriggerTimeOffset(obj, segmentIndex) gets the time, as two 4-byte values, at which the trigger occurred.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetTriggerTimeOffset64</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, time, timeUnits] = ps3000aGetTriggerTimeOffset64(obj, segmentIndex)
+
+time = 0;
+timeUnits = 0;
+
+[status, timetimeUnits] = calllib('PS3000a', ...
+    'ps3000aGetTriggerTimeOffset64', get(obj, 'unithandle'), time, timeUnits, segmentIndex);</MCode>
+               </Code>
+               <Description>ps3000aGetTriggerTimeOffset64(obj, segmentIndex)  gets the time, as a single 64-bit value, at which the trigger occurred.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetValues</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, numSamples, overflow] = ps3000aGetValues(obj, startIndex, noOfSamples, downSampleRatio, downSampleRatioMode, segmentIndex, overflow)
+
+
+[status, numSamples, overflow] = calllib('PS3000a', 'ps3000aGetValues', ...
+    get(obj, 'unithandle'), startIndex, noOfSamples, downSampleRatio, ....
+    downSampleRatioMode, segmentIndex, overflow);</MCode>
+               </Code>
+               <Description>ps3000aGetValues(obj, startIndex, noOfSamples, downSampleRatio, downSampleRatioMode, segmentIndex, overflow) returns block-mode data, with or without downsampling, starting at the specified sample number.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetValuesBlk</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, noOfSamples, overflow] = ps3000aGetValuesBlk(obj, noOfSamples, fromSegmentIndex, toSegmentIndex, downSampleRatio, downSampleRatioMode, overflow)
+
+
+[status, noOfSamples, overflow] = calllib('PS3000a', 'ps3000aGetValuesBlk', ...
+    get(obj, 'unithandle'), noOfSamples, fromSegmentIndex, toSegmentIndex, ... 
+    downSampleRatio, downSampleRatioMode, overflow);</MCode>
+               </Code>
+               <Description>ps3000aGetValuesBlk(obj, noOfSamples, fromSegmentIndex, toSegmentIndex, downSampleRatio, downSampleRatioMode, overflow) retrieves waveforms captured using rapid block mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetValuesOverlapped</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, noOfSamples, overflow] = ps3000aGetValuesOverlapped(obj, startIndex, noOfSamples, downSampleRatio, downSampleRatioMode, segmentIndex, overflow)
+
+[status, noOfSamples, overflow] = calllib('PS3000a', ...
+    'ps3000aGetValuesOverlapped', get(obj, 'unithandle'), startIndex, ...
+    noOfSamples, downSampleRatio, downSampleRatioMode, segmentIndex, overflow)</MCode>
+               </Code>
+               <Description>ps3000aGetValuesOverlapped(obj, startIndex, noOfSamples, downSampleRatio, downSampleRatioMode, segmentIndex, overflow) allows you to make a deferred data-collection request, which will later be executed, and the arguments validated, when you call ps3000aRunBlock in block mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetValuesOverlappedBulk</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, noOfSamples, overflow] = ps3000aGetValuesOverlappedBulk(obj, startIndex, noOfSamples, downSampleRatio, downSampleRatioMode, fromSegmentIndex, toSegmentIndex, overflow)
+
+
+[status, noOfSamples, overflow] = calllib('PS3000a', ...
+    'ps3000aGetValuesOverlappedBulk', get(obj, 'unithandle'), startIndex, noOfSamples, ...
+    downSampleRatio, downSampleRatioMode, fromSegmentIndex, ...
+    toSegmentIndex, overflow);</MCode>
+               </Code>
+               <Description>ps3000aGetValuesOverlappedBulk(obj, startIndex, noOfSamples, downSampleRatio, downSampleRatioMode, fromSegmentIndex, toSegmentIndex, overflow) allows you to make a deferred data-collection request, which will later be
+executed, and the arguments validated, when you call ps3000aRunBlock in rapid block mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetValuesTriggerTimeOffsetBulk</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, timesUpper, timesLower, timeUnits] = ps3000aGetValuesTriggerTimeOffsetBulk(obj, timesUpper, timesLower, timeUnits, fromSegmentIndex, toSegmentIndex)
+
+
+[status, timesUpper, timesLower, timeUnits] = ...
+    calllib('PS3000a', 'ps3000aGetValuesTriggerTimeOffsetBulk',
+    get(obj, 'unithandle'), timesUpper, timesLower, timeUnits, fromSegmentIndex, ...
+    toSegmentIndex)</MCode>
+               </Code>
+               <Description>ps3000aGetValuesTriggerTimeOffsetBulk(obj , timesUpper, timesLower, timeUnits, fromSegmentIndex, toSegmentIndex) retrieves the time offsets, as lower and upper 32-bit values, for waveforms obtained in rapid block mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aGetValuesTriggerTimeOffsetBulk64</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, times, timeUnits] = ps3000aGetValuesTriggerTimeOffsetBulk64(obj, times, timeUnits, fromSegmentIndex, toSegmentIndex)
+
+
+[status, times, timeUnits] = calllib('PS3000a', ...
+    'ps3000aGetValuesTriggerTimeOffsetBulk64', get(obj, 'unithandle'), ...
+    times, timeUnits, fromSegmentIndex, toSegmentIndex)</MCode>
+               </Code>
+               <Description>ps3000aGetValuesTriggerTimeOffsetBulk64(obj, times, timeUnits, fromSegmentIndex, toSegmentIndex) retrieves the 64-bit time offsets for waveforms captured in rapid block mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aIsReady</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, ready] = ps3000aIsReady(obj)
+
+ready = 0; % Initialise value for pointer
+
+[status, ready] = calllib('PS3000a', 'ps3000aIsReady', ...
+    get(obj, 'unithandle'), ready);</MCode>
+               </Code>
+               <Description>ps3000aIsReady(obj) may be used to poll the driver  to see if it has finished collecting the requested samples after ps3000aRunBlock has been called.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aIsTriggerOrPulseWidthQualifierEnabled</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, triggerEnabled, pWQEnabled] = ps3000aIsTriggerOrPulseWidthQualifierEnabled(obj, triggerEnabled, pWQEnabled)
+
+
+[status, triggerEnabled, pWQEnabled] = calllib('PS3000a', ...
+    'ps3000aIsTriggerOrPulseWidthQualifierEnabled', get(obj, 'unithandle'), ...
+    triggerEnabled, pWQEnabled);</MCode>
+               </Code>
+               <Description>ps3000aIsTriggerOrPulseWidthQualifierEnabled(obj, triggerEnabled, pWQEnabled) discovers whether a trigger, or pulse width triggering, is enabled.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aMaximumValue</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aMaximumValue(obj)
+
+max_val_ptr = 0;
+
+[status, obj.UserData.maxValue]  = calllib('PS3000a', ...
+        'ps3000aMaximumValue', get(obj, 'unithandle'), max_val_ptr);
+
+% Maximum value is stored in the driver 
+set(obj, 'maxValue', obj.UserData.maxValue);</MCode>
+               </Code>
+               <Description>ps3000aMaximumValue(obj) returns the maximum ADC count returned by calls to get values.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aMemorySegments</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, nMaxSamples] = ps3000aMemorySegments(obj, nSegments)
+
+nMaxSamples = 0; % Initialise value for pointer
+
+[status, nMaxSamples] = calllib('PS3000a', 'ps3000aMemorySegments', ...
+    get(obj, 'unithandle'), nSegments, nMaxSamples);</MCode>
+               </Code>
+               <Description>ps3000aMemorySegments(obj, nSegments, nMaxSamples) sets the number of memory segments that the scope will use.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aMinimumValue</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aMinimumValue(obj)
+
+min_val_ptr = 0; % Initialise pointer
+
+[status, obj.UserData.minValue]  = calllib('PS3000a', ...
+        'ps3000aMinimumValue', get(obj, 'unithandle'), min_val_ptr);
+   
+% Store value in driver    
+set(obj, 'minValue', obj.UserData.minValue);</MCode>
+               </Code>
+               <Description>ps3000aMinimumValue(obj) returns the minimum ADC count returned by calls to get values.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aNoOfStreamingValues</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, noOfValues] = ps3000aNoOfStreamingValues(obj)
+
+noOfValues = 0; % Initialise value for use as pointer.
+
+[status, noOfValues] = calllib('PS3000a', 'ps3000aNoOfStreamingValues', ...
+    get(obj, 'unithandle'), noOfValues);</MCode>
+               </Code>
+               <Description>ps3000aNoOfStreamingValues(obj) returns the number of samples available after data collection in
+streaming mode. Call it after calling ps3000aStop.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aOpenUnitAsync</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, open_async_status, serial] = ps3000aOpenUnitAsync(obj, serial)
+
+open_async_status = 0; % Initialise - passed as pointer.
+
+[status, open_async, serial] = calllib('PS3000a', 'ps3000aOpenUnitAsync', ...
+    open_async_status, serial);</MCode>
+               </Code>
+               <Description>ps3000aOpenUnitAsync(obj) opens a scope without blocking the calling thread. You can find out when it has finished by periodically calling ps3000aOpenUnitProgress until that function returns a non-zero value.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aOpenUnitProgress</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, handle, progressPercent, complete] = ps3000aOpenUnitProgress(obj)
+
+% Initialise pointers
+handle = 0;
+progressPercent = 0;
+complete = 0;
+
+[status, handle, progressPercent, complete] = calllib('PS3000a', ...
+    'ps3000aOpenUnitProgress', handle, progressPercent, complete);</MCode>
+               </Code>
+               <Description>ps3000aOpenUnitProgress(obj) checks on the progress of a request made to ps3000aOpenUnitAsync to open a scope.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aPingUnit</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aPingUnit(obj)
+
+status = calllib('PS3000a', 'ps3000aPingUnit', get(obj, 'unithandle'));</MCode>
+               </Code>
+               <Description>ps3000aPingUnit(obj) can be used to check that the already opened device is still connected to the USB port and communication is successful.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aRunBlock</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, timeIndisposedMs] = ps3000aRunBlock(obj, noOfPreTriggerSamples, noOfPostTriggerSamples, timebase, oversample, segmentIndex)
+
+timeIndisposedMs = 0;   % Initialise to pass as pointer.
+lpReady = [];           % Set to NULL - Callback function not used.
+pParameter = [];        % Set to NULL - Callback function not used.
+
+[status, timeIndisposedMs] = calllib('PS3000a', 'ps3000aRunBlock', ...
+    get(obj, 'unithandle'), noOfPreTriggerSamples, noOfPostTriggerSamples, ...
+    timebase, oversample, segmentIndex, timeIndisposedMs, lpReady, pParameter);</MCode>
+               </Code>
+               <Description>ps3000aRunBlock(obj, noOfPreTriggerSamples, noOfPostTriggerSamples, timebase, oversample, segmentIndex) starts collecting data in block mode. The driver must then be polled to confirm if data is available for collection. Use ps3000aIsReady to do this.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aRunStreaming</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, sampleInterval] = ps3000aRunStreaming(obj, sampleInterval, sampleIntervalTimeUnits, maxPreTriggerSamples, maxPostTriggerSamples, autoStop, downSampleRatio, downSampleRatioMode, overviewBufferSize)
+
+[status, sampleInterval] = calllib('PS3000a', 'ps3000aRunStreaming', ...
+    get(obj, 'unithandle'), sampleInterval, sampleIntervalTimeUnits, ...
+    maxPreTriggerSamples, maxPostTriggerSamples, autoStop, ...
+    downSampleRatio, downSampleRatioMode, overviewBufferSize);</MCode>
+               </Code>
+               <Description>ps3000aRunStreaming(obj, sampleInterval, sampleIntervalTimeUnits, maxPreTriggerSamples, maxPostTriggerSamples, autoStop, downSampleRatio, downSampleRatioMode, overviewBufferSize) function tells the oscilloscope to start collecting data in streaming mode. Use the wrapper function to obtain the values. </Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetBandwidthFilter</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetBandwidthFilter(obj, channel, bandwidth)
+
+device_variant = obj.InstrumentModel;
+
+ps3000A_4ch_array = ['3404A'; '3404B'; '3405A'; '3405B'; '3406A'; '3406B'];
+
+% Convert to cell array
+ps3000A_4ch_cell = cellstr(ps3000A_4ch_array);
+
+% Check if variant is member of 4-channel 3000A series
+tf = strcmp(device_variant, ps3000A_4ch_cell);
+
+if any(tf) == 1
+    
+    status = calllib('PS3000a', 'ps3000aSetBandwidthFilter', ...
+        get(obj, 'unithandle'), channel, bandwidth);
+else
+    disp('ERROR: Function not supported by this device');
+    
+end</MCode>
+               </Code>
+               <Description>ps3000aSetBandwidthFilter(obj, channel, bandwidth) specifies the bandwidth limit.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetChannel</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetChannel(obj, channel, enabled, type, range, analogueOffset)
+
+status = calllib('PS3000a', 'ps3000aSetChannel', get(obj, 'unithandle'), ...
+    channel, enabled, type, range, analogueOffset);</MCode>
+               </Code>
+               <Description>ps3000aSetChannel(obj, channel, enabled, type, range, analogueOffset) specifies whether an input channel is to be enabled, its input coupling type, voltage range, analog offset and bandwidth limit.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetDataBuffer</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetDataBuffer(obj, channel, buffer, bufferLth, segmentIndex, mode)
+
+status = calllib('PS3000a', 'ps3000aSetDataBuffer', get(obj, 'unithandle'), ...
+    channel, buffer, bufferLth, segmentIndex, mode);</MCode>
+               </Code>
+               <Description>ps3000aSetDataBuffer(obj, channel, buffer, bufferLth, segmentIndex, mode) tells the driver where to store the data, either unprocessed or downsampled, that will be returned after the next call to one of the GetValues functions.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetDataBuffers</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetDataBuffers(obj, channel, pBufferMax, pBufferMin, bufferLth, segmentIndex, ratioMode)
+
+status = calllib('PS3000a', 'ps3000aSetDataBuffers', ...
+    get(obj, 'unithandle'), channel, pBufferMax, pBufferMin, bufferLth, ...
+    segmentIndex, ratioMode);</MCode>
+               </Code>
+               <Description>ps3000aSetDataBuffers(obj, channel, pBufferMax, pBufferMin, bufferLth, segmentIndex, ratioMode) tells the driver the location of one or two buffers for receiving data.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetEts</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function [status, sampleTimePicoSeconds] = ps3000aSetEts(obj, mode, etsCycles, etsInterleave)
+
+sampleTimePicoSeconds = 0; % Initialise to pass as pointer
+
+[status, sampleTimePicoSeconds] = calllib('PS3000a', 'ps3000aSetEts', ...
+    get(obj, 'unithandle'), mode, etsCycles, etsInterleave, sampleTimePicoSeconds);</MCode>
+               </Code>
+               <Description>ps3000aSetEts(obj, mode, etsCycles, etsInterleave) is used to enable or disable ETS (equivalent-time sampling) and to set the ETS parameters.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetEtsTimeBuffer</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetEtsTimeBuffer(obj, buffer, bufferLth)
+
+status = calllib('PS3000a', 'ps3000aSetEtsTimeBuffer', ...
+    get(obj, 'unithandle'), buffer, bufferLth);</MCode>
+               </Code>
+               <Description>ps3000aSetEtsTimeBuffer(obj, buffer, bufferLth) tells the driver where to find your application's ETS time buffers.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetEtsTimeBuffers</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetEtsTimeBuffers(obj, timeUpper, timeLower, bufferLth)
+
+status = ps3000aSetEtsTimeBuffers(get(obj, 'unithandle'), timeUpper, ...
+    timeLower, bufferLth);</MCode>
+               </Code>
+               <Description>ps3000aSetEtsTimeBuffers(obj, timeUpper, timeLower, bufferLth) tells the driver where to find your application's ETS time buffers. These buffers contain the timing information for each ETS sample after you run a blockmode ETS capture.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetNoOfCaptures</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetNoOfCaptures(obj, nCaptures)
+
+status = calllib('PS3000a', 'ps3000aSetNoOfCaptures', ...
+    get(obj, 'unithandle'), nCaptures);</MCode>
+               </Code>
+               <Description>ps3000aSetNoOfCaptures(obj, nCaptures) sets the number of captures to be collected in one run of rapid block mode.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetPulseWidthQualifier</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetPulseWidthQualifier(obj, conditions, nConditions, direction, lower, upper, type)
+
+status = calllib('PS3000a', 'ps3000aSetPulseWidthQualifier', ...
+    get(obj, 'unithandle'), conditions, nConditions, direction, lower, ...
+    upper, type)</MCode>
+               </Code>
+               <Description>ps3000aSetPulseWidthQualifier(obj, conditions, nConditions, direction, lower, upper, type) sets up pulse-width qualification, which can be used on its own for pulse width triggering or combined with window triggering to produce more complex triggers.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetSigGenArbitrary</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetSigGenArbitrary(obj, offsetVoltage, pkToPk, startDeltaPhase, stopDeltaPhase, deltaPhaseIncrement, dwellCount, arbitraryWaveform, arbitraryWaveformSize, sweepType, operation, indexMode, shots, sweeps, triggerType, triggerSource, extInThreshold)
+
+status = calllib('PS3000a', 'ps3000aSetSigGenArbitrary', ...
+    get(obj, 'unithandle'), offsetVoltage, pkToPk, startDeltaPhase, stopDeltaPhase, ...
+    deltaPhaseIncrement, dwellCount, arbitraryWaveform, ...
+    arbitraryWaveformSize, sweepType, operation, indexMode, shots, ...
+    sweeps, triggerType, triggerSource, extInThreshold);</MCode>
+               </Code>
+               <Description>ps3000aSetSigGenArbitrary(obj, offsetVoltage, pkToPk, startDeltaPhase, stopDeltaPhase, deltaPhaseIncrement, dwellCount, arbitraryWaveform, arbitraryWaveformSize, sweepType, operation, indexMode, shots, sweeps, triggerType, triggerSource, extInThreshold) programs the signal generator to produce an arbitrary waveform.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetSigGenBuiltIn</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetSigGenBuiltIn(obj, offsetVoltage, pkToPk, waveType, startFrequency, stopFrequency, increment, dwellTime, sweepType, operation, shots, sweeps, triggerType, triggerSource, extInThreshold)
+
+status = calllib('PS3000a', 'ps3000aSetSigGenBuiltIn', get(obj, 'unithandle'), ...
+    offsetVoltage, pkToPk, waveType, startFrequency, stopFrequency, ...
+    increment, dwellTime, sweepType, operation, shots, sweeps, ...
+    triggerType, triggerSource, extInThreshold);</MCode>
+               </Code>
+               <Description>ps3000aSetSigGenBuiltIn(obj, offsetVoltage, pkToPk, waveType, startFrequency, stopFrequency, increment, dwellTime, sweepType, operation, shots, sweeps, triggerType, triggerSource, extInThreshold) sets up the signal generator to produce a signal from a list of built-in waveforms.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSetSimpleTrigger</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSetSimpleTrigger(obj, enable, source, threshold, direction, delay, autoTrigger_ms)
+
+status = calllib('PS3000a', 'ps3000aSetSimpleTrigger', ...
+            get(obj, 'unithandle'), enable, source, threshold, direction, ...
+            delay, autoTrigger_ms);</MCode>
+               </Code>
+               <Description>ps3000aSetSimpleTrigger(obj, enable, source, threshold, direction, delay, autoTrigger_ms) simplifies arming the trigger. It supports only the LEVEL trigger types and does not allow more than one channel to have a trigger applied to it.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aSigGenSoftwareControl</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aSigGenSoftwareControl(obj, state)
+
+status = calllib('PS3000a', 'ps3000aSigGenSoftwareControl', ...
+    get(obj, 'unithandle'), state);</MCode>
+               </Code>
+               <Description>ps3000aSigGenSoftwareControl(obj, state) causes a trigger event, or starts and stops gating.</Description>
+            </Method>
+            <Method>
+               <Name>ps3000aStop</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = ps3000aStop(obj)
+
+status = calllib('PS3000a', 'ps3000aStop', get(obj, 'unithandle'));</MCode>
+               </Code>
+               <Description>ps3000aStop(obj) stops the scope device from sampling data.</Description>
+            </Method>
+            <Method>
+               <Name>setAdvancedTrigger</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function advTrigStatus = setAdvancedTrigger(obj, channelProperties, triggerConditions, directions, delay, auxOutputEnabled, autoTriggerMs)
+
+fprintf('Number of property elements: %d\n', length(channelProperties));
+
+%disp('Trigger Channel Properties...')
+% Set the trigger channel properties
+advTrigStatus.set_trig_ch_prop_status = calllib('PS3000a', ...
+    'ps3000aSetTriggerChannelProperties', get(obj, 'unithandle'), ...
+    channelProperties, length(channelProperties), auxOutputEnabled, autoTriggerMs);
+
+advTrigStatus.set_trig_ch_prop_status;
+
+%disp('Trigger Channel Conditions...')
+% Set trigger conditions
+advTrigStatus.set_trig_ch_conditions_status = calllib('PS3000a', ...
+    'ps3000aSetTriggerChannelConditions', get(obj, 'unithandle'), ...
+    triggerConditions, length(triggerConditions));
+
+advTrigStatus.set_trig_ch_conditions_status;
+
+%disp('Directions...')
+% Set directions
+advTrigStatus.set_trig_ch_dirs_status = calllib('PS3000a', ...
+    'ps3000aSetTriggerChannelDirections', ...
+    get(obj, 'unithandle'), directions.channelA, directions.channelB, ...
+    directions.channelC, directions.channelD, directions.external, directions.aux);
+
+advTrigStatus.set_trig_ch_dirs_status;
+
+%disp('Trigger delay...')
+% Post trigger delay
+advTrigStatus.set_trig_delay_status = calllib('PS3000a', ...
+    'ps3000aSetTriggerDelay', get(obj, 'unithandle'), delay);
+
+advTrigStatus.set_trig_delay_status;
+
+%advTrigStatus.setPWQ = calllib('PS3000a', 'ps3000aSetPulseWidthQualifier', )</MCode>
+               </Code>
+               <Description>setAdvancedTrigger(obj, channelProperties, nChannelProperties, triggerConditions, nTriggerConditions, directions, delay, auxOutputEnabled, autoTriggerMs) sets the Advanced Trigger properties for the oscilloscope.</Description>
+            </Method>
+            <Method>
+               <Name>setDefaults</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <MCode>function status = setDefaults(obj, channelsettings)
+
+% Turn off ETS
+
+sample_time_ps = 0;
+
+status = [];
+
+[status.set_Ets, sample_time_ps]  = calllib('PS3000a', ...
+        'ps3000aSetEts', get(obj, 'unithandle'), 0, 0, 0, []);
+    
+% Set the channels
+ 
+status.set_ch_a = calllib('PS3000a', 'ps3000aSetChannel', ...
+    get(obj, 'unithandle'), 0, 1, 1, channelsettings(1).range, 0);
+        
+status.set_ch_b = calllib('PS3000a', 'ps3000aSetChannel', ...
+    get(obj, 'unithandle'), 1, 1, 1, channelsettings(2).range, 0);
+
+% Set defaults for remaining two channels if it is a 4 channel scope.
+num_channels = get(obj, 'channelCount');
+
+if num_channels == 4
+    
+    status.set_ch_c = calllib('PS3000a', 'ps3000aSetChannel', ...
+        get(obj, 'unithandle'), 2, 1, 1, channelsettings(3).range, 0);
+        
+    status.set_ch_d = calllib('PS3000a', 'ps3000aSetChannel', ...
+        get(obj, 'unithandle'), 3, 1, 1, channelsettings(4).range, 0);
+    
+end</MCode>
+               </Code>
+               <Description>setDefaults(obj, channelsettings) sets default channel settings for each channel on a device.</Description>
+            </Method>
+         </MethodInfo>
+      </Group>
+   </GroupInfo>
+</MATLABInstrumentDriver>

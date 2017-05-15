@@ -1,0 +1,369 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>PS3000aCONSTANTS</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-06-11"><meta name="DC.source" content="PS3000aConstants.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>PS3000aCONSTANTS</h1><!--introduction--><p>Defines PicoScope 3000 Series constants from header file ps3000aApi.h</p><p>The PS3000AConstants class defines a number of constant values that can be used to define the properties of a PicoScope 3000 Series Oscilloscope or Mixed Signal Oscilloscope (MSO) device or for passing as parameters to function calls.</p><p>This properties in this file are divided into the following sub-sections:</p><!--/introduction--><div><ul><li>Equivalent Time Sampling Properties</li><li>External trigger: Max/min counts &amp; Max/min voltage</li><li>Function/Arbitrary Waveform Parameters</li><li>Waveform Frequencies</li><li>Digital channel definitions (MSO Models only): Max/min logic level as counts &amp; Max/min logic voltage</li><li>PicoScope 3000 Series Models: 2-channel, 4-channel and MSO variants</li></ul></div><pre class="codeinput"><span class="keyword">classdef</span> PS3000aConstants
+
+    <span class="keyword">properties</span> (Constant)
+
+        <span class="comment">% Equivalent Time Sampling Properties</span>
+
+        PS3207A_MAX_ETS_CYCLES   = 500; <span class="comment">% 500</span>
+        PS3207A_MAX_INTERLEAVE	 = 40;  <span class="comment">% 40</span>
+
+        PS3206A_MAX_ETS_CYCLES	 = 500; <span class="comment">% 500</span>
+        PS3206A_MAX_INTERLEAVE	 = 40;  <span class="comment">% 40</span>
+        PS3206MSO_MAX_INTERLEAVE = 80;  <span class="comment">% 80</span>
+
+        PS3205A_MAX_ETS_CYCLES	 = 250; <span class="comment">% 250</span>
+        PS3205A_MAX_INTERLEAVE	 = 20;  <span class="comment">% 20</span>
+        PS3205MSO_MAX_INTERLEAVE = 40;  <span class="comment">% 40</span>
+
+        PS3204A_MAX_ETS_CYCLES	 = 125; <span class="comment">% 125</span>
+        PS3204A_MAX_INTERLEAVE	 = 10;  <span class="comment">% 10</span>
+        PS3204MSO_MAX_INTERLEAVE = 20;  <span class="comment">% 20</span>
+
+        <span class="comment">% External trigger max/min counts</span>
+        PS3000A_EXT_MAX_VALUE = 32767;  <span class="comment">% 32767</span>
+        PS3000A_EXT_MIN_VALUE = -32767; <span class="comment">% -32767</span>
+
+        <span class="comment">% External trigger max/min voltage</span>
+        PS3000A_EXT_MAX_VOLTAGE = 5;    <span class="comment">% 5 volts</span>
+        PS3000A_EXT_MIN_VOLTAGE = -5;   <span class="comment">% -5 volts</span>
+
+        <span class="comment">% Function/Arbitrary Waveform Parameters</span>
+        MIN_SIG_GEN_FREQ = 0.0; <span class="comment">% 0 Hz</span>
+        MAX_SIG_GEN_FREQ = 20000000.0; <span class="comment">% 20 MHz</span>
+
+        PS3207B_MAX_SIG_GEN_BUFFER_SIZE = 32768;    <span class="comment">% 32768</span>
+        PS3206B_MAX_SIG_GEN_BUFFER_SIZE = 16384;    <span class="comment">% 16384</span>
+        MAX_SIG_GEN_BUFFER_SIZE         = 8192;     <span class="comment">% 8192</span>
+        MIN_SIG_GEN_BUFFER_SIZE         = 1;        <span class="comment">% 1</span>
+        MIN_DWELL_COUNT                 = 3;        <span class="comment">% 3</span>
+        MAX_SWEEPS_SHOTS				= pow2(30) - 1; <span class="comment">%1073741823</span>
+
+        MAX_ANALOGUE_OFFSET_50MV_200MV = 0.250;     <span class="comment">% 0.250 Volts</span>
+        MIN_ANALOGUE_OFFSET_50MV_200MV = -0.250;    <span class="comment">% -0.250 Volts</span>
+        MAX_ANALOGUE_OFFSET_500MV_2V   = 2.500;     <span class="comment">% 2.5 Volts</span>
+        MIN_ANALOGUE_OFFSET_500MV_2V   = -2.500;    <span class="comment">% -2.5 Volts</span>
+        MAX_ANALOGUE_OFFSET_5V_20V     = 20;        <span class="comment">% 20 Volts</span>
+        MIN_ANALOGUE_OFFSET_5V_20V	   = -20;       <span class="comment">% -20 Volts</span>
+
+        PS3000A_SHOT_SWEEP_TRIGGER_CONTINUOUS_RUN = hex2dec(<span class="string">'FFFFFFFF'</span>); <span class="comment">% 0xFFFFFFFF</span>
+
+        <span class="comment">% Frequencies</span>
+
+        PS3000A_SINE_MAX_FREQUENCY		= 1000000;
+        PS3000A_SQUARE_MAX_FREQUENCY	= 1000000;
+        PS3000A_TRIANGLE_MAX_FREQUENCY	= 1000000;
+        PS3000A_SINC_MAX_FREQUENCY		= 1000000;
+        PS3000A_RAMP_MAX_FREQUENCY		= 1000000;
+        PS3000A_HALF_SINE_MAX_FREQUENCY	= 1000000;
+        PS3000A_GAUSSIAN_MAX_FREQUENCY  = 1000000;
+        PS3000A_PRBS_MAX_FREQUENCY		= 1000000;
+        PS3000A_PRBS_MIN_FREQUENCY		= 0.03; <span class="comment">% 0.03 Hz</span>
+        PS3000A_MIN_FREQUENCY			= 0.03; <span class="comment">% 0.03 Hz</span>
+
+        <span class="comment">% Digital channel definitions (MSO Models only)</span>
+
+        <span class="comment">% Max/min logic level as counts</span>
+        PS3000A_MAX_LOGIC_LEVEL = 32767;    <span class="comment">% 32767</span>
+        PS3000A_MIN_LOGIC_LEVEL = -32767;   <span class="comment">% -32767</span>
+
+        <span class="comment">% Max/min logic voltage</span>
+        PS3000A_MAX_LOGIC_VOLTAGE = 5.0;    <span class="comment">% 5 Volts</span>
+        PS3000A_MIN_LOGIC_VOLTAGE = -5.0;   <span class="comment">% -5 Volts</span>
+
+        <span class="comment">% PicoScope 3000 Series Models</span>
+        MODEL_NONE      = <span class="string">'NONE'</span>;   <span class="comment">% NONE</span>
+
+        <span class="comment">% 2-channel variants</span>
+        MODEL_PS3204A   = <span class="string">'3204A'</span>;  <span class="comment">% 3204A</span>
+        MODEL_PS3204B   = <span class="string">'3204B'</span>;  <span class="comment">% 3204B</span>
+        MODEL_PS3205A   = <span class="string">'3205A'</span>;  <span class="comment">% 3205A</span>
+        MODEL_PS3205B   = <span class="string">'3205B'</span>;  <span class="comment">% 3205B</span>
+        MODEL_PS3206A   = <span class="string">'3206A'</span>;  <span class="comment">% 3206A</span>
+        MODEL_PS3206B   = <span class="string">'3206B'</span>;  <span class="comment">% 3206B</span>
+        MODEL_PS3207A   = <span class="string">'3207A'</span>;  <span class="comment">% 3207A</span>
+        MODEL_PS3207B   = <span class="string">'3207B'</span>;  <span class="comment">% 3207B</span>
+
+        MODEL_PS3203D   = <span class="string">'3203D'</span>;  <span class="comment">% 3203D</span>
+        MODEL_PS3204D   = <span class="string">'3204D'</span>;  <span class="comment">% 3204D</span>
+        MODEL_PS3205D   = <span class="string">'3205D'</span>;  <span class="comment">% 3205D</span>
+        MODEL_PS3206D   = <span class="string">'3206D'</span>;  <span class="comment">% 3206D</span>
+
+        <span class="comment">% 4-channel variants</span>
+        MODEL_PS3404A   = <span class="string">'3404A'</span>;  <span class="comment">% 3404A</span>
+        MODEL_PS3404B   = <span class="string">'3404B'</span>;  <span class="comment">% 3404B</span>
+        MODEL_PS3405A   = <span class="string">'3405A'</span>;  <span class="comment">% 3405A</span>
+        MODEL_PS3405B   = <span class="string">'3405B'</span>;  <span class="comment">% 3405B</span>
+        MODEL_PS3406A   = <span class="string">'3406A'</span>;  <span class="comment">% 3406A</span>
+        MODEL_PS3406B   = <span class="string">'3406B'</span>;  <span class="comment">% 3406B</span>
+
+        MODEL_PS3403D   = <span class="string">'3403D'</span>;  <span class="comment">% 3403D</span>
+        MODEL_PS3404D   = <span class="string">'3404D'</span>;  <span class="comment">% 3404D</span>
+        MODEL_PS3405D   = <span class="string">'3405D'</span>;  <span class="comment">% 3405D</span>
+        MODEL_PS3406D   = <span class="string">'3406D'</span>;  <span class="comment">% 3406D</span>
+
+        <span class="comment">% MSO Products</span>
+        MODEL_PS3204MSO = <span class="string">'3204MSO'</span>;    <span class="comment">% 3204MSO</span>
+        MODEL_PS3205MSO = <span class="string">'3205MSO'</span>;    <span class="comment">% 3205MSO</span>
+        MODEL_PS3206MSO = <span class="string">'3206MSO'</span>;    <span class="comment">% 3206MSO</span>
+
+        MODEL_PS3203DMSO = <span class="string">'3203DMSO'</span>;  <span class="comment">% 3203DMSO</span>
+        MODEL_PS3204DMSO = <span class="string">'3204DMSO'</span>;  <span class="comment">% 3204DMSO</span>
+        MODEL_PS3205DMSO = <span class="string">'3205DMSO'</span>;  <span class="comment">% 3205DMSO</span>
+        MODEL_PS3206DMSO = <span class="string">'3206DMSO'</span>;  <span class="comment">% 3206DMSO</span>
+
+        MODEL_PS3403DMSO = <span class="string">'3403DMSO'</span>;  <span class="comment">% 3403DMSO</span>
+        MODEL_PS3404DMSO = <span class="string">'3404DMSO'</span>;  <span class="comment">% 3404DMSO</span>
+        MODEL_PS3405DMSO = <span class="string">'3405DMSO'</span>;  <span class="comment">% 3405DMSO</span>
+        MODEL_PS3406DMSO = <span class="string">'3406DMSO'</span>;  <span class="comment">% 3406DMSO</span>
+
+    <span class="keyword">end</span>
+
+<span class="keyword">end</span>
+
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+<span class="comment">%</span>
+<span class="comment">% Filename:    PS3000aConstants</span>
+<span class="comment">%</span>
+<span class="comment">% Copyright:   Pico Technology Limited 2013 - 2015</span>
+<span class="comment">%</span>
+<span class="comment">% Author:      HSM</span>
+<span class="comment">%</span>
+<span class="comment">% Description:</span>
+<span class="comment">%   This is a MATLAB script that contains reference information for the</span>
+<span class="comment">%   PicoScope 3000 Instrument Control Driver - DO NOT EDIT.</span>
+<span class="comment">%</span>
+<span class="comment">% Ensure that the file is on the MATLAB Path.</span>
+<span class="comment">%</span>
+<span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% PS3000aCONSTANTS 
+% Defines PicoScope 3000 Series constants from header file ps3000aApi.h
+%
+% The PS3000AConstants class defines a number of constant values that
+% can be used to define the properties of a PicoScope 3000 Series
+% Oscilloscope or Mixed Signal Oscilloscope (MSO) device or for passing
+% as parameters to function calls.
+%
+% This properties in this file are divided into the following
+% sub-sections:
+%
+%%
+% 
+% * Equivalent Time Sampling Properties 
+% * External trigger: Max/min counts & Max/min voltage
+% * Function/Arbitrary Waveform Parameters
+% * Waveform Frequencies
+% * Digital channel definitions (MSO Models only): Max/min logic level as
+% counts & Max/min logic voltage
+% * PicoScope 3000 Series Models: 2-channel, 4-channel and MSO variants
+
+classdef PS3000aConstants   
+    
+    properties (Constant)
+        
+        % Equivalent Time Sampling Properties
+        
+        PS3207A_MAX_ETS_CYCLES   = 500; % 500
+        PS3207A_MAX_INTERLEAVE	 = 40;  % 40
+
+        PS3206A_MAX_ETS_CYCLES	 = 500; % 500
+        PS3206A_MAX_INTERLEAVE	 = 40;  % 40
+        PS3206MSO_MAX_INTERLEAVE = 80;  % 80
+
+        PS3205A_MAX_ETS_CYCLES	 = 250; % 250
+        PS3205A_MAX_INTERLEAVE	 = 20;  % 20
+        PS3205MSO_MAX_INTERLEAVE = 40;  % 40
+
+        PS3204A_MAX_ETS_CYCLES	 = 125; % 125
+        PS3204A_MAX_INTERLEAVE	 = 10;  % 10
+        PS3204MSO_MAX_INTERLEAVE = 20;  % 20
+
+        % External trigger max/min counts
+        PS3000A_EXT_MAX_VALUE = 32767;  % 32767
+        PS3000A_EXT_MIN_VALUE = -32767; % -32767
+        
+        % External trigger max/min voltage
+        PS3000A_EXT_MAX_VOLTAGE = 5;    % 5 volts
+        PS3000A_EXT_MIN_VOLTAGE = -5;   % -5 volts
+
+        % Function/Arbitrary Waveform Parameters
+        MIN_SIG_GEN_FREQ = 0.0; % 0 Hz
+        MAX_SIG_GEN_FREQ = 20000000.0; % 20 MHz
+
+        PS3207B_MAX_SIG_GEN_BUFFER_SIZE = 32768;    % 32768
+        PS3206B_MAX_SIG_GEN_BUFFER_SIZE = 16384;    % 16384
+        MAX_SIG_GEN_BUFFER_SIZE         = 8192;     % 8192
+        MIN_SIG_GEN_BUFFER_SIZE         = 1;        % 1
+        MIN_DWELL_COUNT                 = 3;        % 3
+        MAX_SWEEPS_SHOTS				= pow2(30) - 1; %1073741823
+
+        MAX_ANALOGUE_OFFSET_50MV_200MV = 0.250;     % 0.250 Volts
+        MIN_ANALOGUE_OFFSET_50MV_200MV = -0.250;    % -0.250 Volts
+        MAX_ANALOGUE_OFFSET_500MV_2V   = 2.500;     % 2.5 Volts
+        MIN_ANALOGUE_OFFSET_500MV_2V   = -2.500;    % -2.5 Volts
+        MAX_ANALOGUE_OFFSET_5V_20V     = 20;        % 20 Volts
+        MIN_ANALOGUE_OFFSET_5V_20V	   = -20;       % -20 Volts
+
+        PS3000A_SHOT_SWEEP_TRIGGER_CONTINUOUS_RUN = hex2dec('FFFFFFFF'); % 0xFFFFFFFF
+
+        % Frequencies
+        
+        PS3000A_SINE_MAX_FREQUENCY		= 1000000;  
+        PS3000A_SQUARE_MAX_FREQUENCY	= 1000000;
+        PS3000A_TRIANGLE_MAX_FREQUENCY	= 1000000;
+        PS3000A_SINC_MAX_FREQUENCY		= 1000000;
+        PS3000A_RAMP_MAX_FREQUENCY		= 1000000;
+        PS3000A_HALF_SINE_MAX_FREQUENCY	= 1000000;
+        PS3000A_GAUSSIAN_MAX_FREQUENCY  = 1000000;
+        PS3000A_PRBS_MAX_FREQUENCY		= 1000000;
+        PS3000A_PRBS_MIN_FREQUENCY		= 0.03; % 0.03 Hz
+        PS3000A_MIN_FREQUENCY			= 0.03; % 0.03 Hz
+
+        % Digital channel definitions (MSO Models only)
+        
+        % Max/min logic level as counts
+        PS3000A_MAX_LOGIC_LEVEL = 32767;    % 32767
+        PS3000A_MIN_LOGIC_LEVEL = -32767;   % -32767
+        
+        % Max/min logic voltage
+        PS3000A_MAX_LOGIC_VOLTAGE = 5.0;    % 5 Volts
+        PS3000A_MIN_LOGIC_VOLTAGE = -5.0;   % -5 Volts
+        
+        % PicoScope 3000 Series Models
+        MODEL_NONE      = 'NONE';   % NONE
+        
+        % 2-channel variants
+        MODEL_PS3204A   = '3204A';  % 3204A
+        MODEL_PS3204B   = '3204B';  % 3204B
+        MODEL_PS3205A   = '3205A';  % 3205A
+        MODEL_PS3205B   = '3205B';  % 3205B
+        MODEL_PS3206A   = '3206A';  % 3206A
+        MODEL_PS3206B   = '3206B';  % 3206B
+        MODEL_PS3207A   = '3207A';  % 3207A
+        MODEL_PS3207B   = '3207B';  % 3207B
+        
+        MODEL_PS3203D   = '3203D';  % 3203D
+        MODEL_PS3204D   = '3204D';  % 3204D
+        MODEL_PS3205D   = '3205D';  % 3205D
+        MODEL_PS3206D   = '3206D';  % 3206D
+
+        % 4-channel variants
+        MODEL_PS3404A   = '3404A';  % 3404A
+        MODEL_PS3404B   = '3404B';  % 3404B
+        MODEL_PS3405A   = '3405A';  % 3405A
+        MODEL_PS3405B   = '3405B';  % 3405B
+        MODEL_PS3406A   = '3406A';  % 3406A
+        MODEL_PS3406B   = '3406B';  % 3406B
+        
+        MODEL_PS3403D   = '3403D';  % 3403D
+        MODEL_PS3404D   = '3404D';  % 3404D
+        MODEL_PS3405D   = '3405D';  % 3405D
+        MODEL_PS3406D   = '3406D';  % 3406D
+        
+        % MSO Products
+        MODEL_PS3204MSO = '3204MSO';    % 3204MSO
+        MODEL_PS3205MSO = '3205MSO';    % 3205MSO
+        MODEL_PS3206MSO = '3206MSO';    % 3206MSO
+        
+        MODEL_PS3203DMSO = '3203DMSO';  % 3203DMSO
+        MODEL_PS3204DMSO = '3204DMSO';  % 3204DMSO
+        MODEL_PS3205DMSO = '3205DMSO';  % 3205DMSO
+        MODEL_PS3206DMSO = '3206DMSO';  % 3206DMSO
+        
+        MODEL_PS3403DMSO = '3403DMSO';  % 3403DMSO
+        MODEL_PS3404DMSO = '3404DMSO';  % 3404DMSO
+        MODEL_PS3405DMSO = '3405DMSO';  % 3405DMSO
+        MODEL_PS3406DMSO = '3406DMSO';  % 3406DMSO
+        
+    end
+
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Filename:    PS3000aConstants
+%
+% Copyright:   Pico Technology Limited 2013 - 2015
+%
+% Author:      HSM
+%
+% Description:
+%   This is a MATLAB script that contains reference information for the
+%   PicoScope 3000 Instrument Control Driver - DO NOT EDIT.
+%
+% Ensure that the file is on the MATLAB Path.		
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+##### SOURCE END #####
+--></body></html>

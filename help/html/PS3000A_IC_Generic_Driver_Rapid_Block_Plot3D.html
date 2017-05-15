@@ -1,0 +1,491 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>PS3000A_IC_GENERIC_DRIVER_RAPID_BLOCK_PLOT3D</title><meta name="generator" content="MATLAB 8.4"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2015-04-15"><meta name="DC.source" content="PS3000A_IC_Generic_Driver_Rapid_Block_Plot3D.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h1>PS3000A_IC_GENERIC_DRIVER_RAPID_BLOCK_PLOT3D</h1><!--introduction--><p>This is an example of an instrument control session using a device object. The instrument control session comprises  all the steps you are likely to take when communicating with your instrument. These steps are:</p><pre>   1. Create a device object
+   2. Connect to the instrument
+   3. Configure properties
+   4. Invoke functions
+   5. Disconnect from the instrument</pre><p>To run the instrument control session, type the name of the file, PS3000A_IC_Generic_Driver_Rapid_Block_Plot3D, at the MATLAB command prompt.</p><p>The file, PS3000A_IC_GENERIC_DRIVER_BLOCK_PLOT3D.M must be on your MATLAB PATH. For additional information on setting your MATLAB PATH, type 'help addpath' at the MATLAB command prompt.</p><p>Example:     PS3000A_IC_Generic_Driver_Rapid_Block_Plot3D;</p><p>Description:     Demonstrates how to call functions in order to capture data in     Rapid Block Mode from a PicoScope 3000 series oscilloscope using     the underlying 'A' API.</p><p>See also ICDEVICE.</p><p>Copyright:  Pico Technology Limited 2014 - 2015</p><p>Author: HSM</p><p>History:</p><p>15Apr15 HSM Modified script for publishing.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Suggested Input Test Signal</a></li><li><a href="#2">Clear Command Window</a></li><li><a href="#3">Load Configuration Information</a></li><li><a href="#4">Device Connection</a></li><li><a href="#5">Set Channels</a></li><li><a href="#6">Set Memory Segments</a></li><li><a href="#7">Query Timebase</a></li><li><a href="#8">Set Simple Trigger</a></li><li><a href="#9">Setup Rapid Block Parameters and Capture Data</a></li><li><a href="#10">Process data</a></li><li><a href="#11">Disconnect Device</a></li></ul></div><h2>Suggested Input Test Signal<a name="1"></a></h2><p>This example was published using the following test signals:</p><div><ul><li>4Vpp, Swept sine wave on Channel A (Start: 200Hz, Stop: 1kHz, Sweep type: Up, Increment: 50Hz, Increment Time: 5ms)</li></ul></div><h2>Clear Command Window<a name="2"></a></h2><pre class="codeinput">clc;
+</pre><h2>Load Configuration Information<a name="3"></a></h2><pre class="codeinput">PS3000aConfig;
+</pre><h2>Device Connection<a name="4"></a></h2><pre class="codeinput"><span class="comment">% Create a device object.</span>
+<span class="comment">% The serial number can be specified as a second input parameter.</span>
+ps3000aDeviceObj = icdevice(<span class="string">'picotech_ps3000a_generic.mdd'</span>, <span class="string">''</span>);
+
+<span class="comment">% Connect device object to hardware.</span>
+connect(ps3000aDeviceObj);
+</pre><pre class="codeoutput">
+Copyright (C) Pico Technology Ltd. 2014 - 2015
+
+PicoScope 3000 Series MATLAB Instrument Driver
+
+Number of units found: 1
+
+Serial number(s): CU654/001
+
+Opening PicoScope 3000 Series device...
+
+   Instrument Device Object Using Driver : picotech_ps3000a_generic.mdd
+ 
+   Instrument Information
+      Type:               Oscilloscope
+      Manufacturer:       Pico Technology Ltd.
+      Model:              PicoScope 3000 Series (A API)
+ 
+   Driver Information
+      DriverType:         MATLAB generic
+      DriverName:         picotech_ps3000a_generic.mdd
+      DriverVersion:      1.2.14
+ 
+   Communication State
+      Status:             open
+
+Setting Device Parameters...
+
+Default Analogue Channel Setup:-
+--------------------------------
+
+Channel A:-
+	Enabled: True
+	Coupling: DC
+	Range: 5V
+	Analogue Offset: 0.0V
+
+Channel B:-
+	Enabled: True
+	Coupling: DC
+	Range: 5V
+	Analogue Offset: 0.0V
+
+Turning off Equivalent Time Sampling...
+Turning off trigger...
+
+Default Block mode parameters:-
+
+               Timebase index : 64
+                 Time Interval: 496.0 ns
+ Number of pre-trigger samples: 0
+Number of post-trigger samples: 1000000
+       Total number of samples: 1000000
+
+Default Streaming mode parameters:-
+
+ Streaming interval: 1.00e-06 s
+Streaming auto stop: 1
+
+Default Signal generator parameters:-
+
+      Start frequency: 1000 Hz
+       Stop frequency: 1000 Hz
+       Offset voltage: 0 mV
+ Peak to Peak voltage: 2000 mV
+
+Initialisation complete.
+
+Connected to PicoScope 3000 Series device:-
+
+      Instrument Model: 3204D
+   Batch/Serial Number: CU654/001
+     Analogue Channels: 2
+             Bandwidth: 70 MHz
+         Buffer memory: 128 MS
+ Maximum sampling rate: 1 GS/s
+ Signal Generator Type: Arbitrary Waveform Generator
+
+</pre><h2>Set Channels<a name="5"></a></h2><p>Default driver settings applied to channels are listed below - use ps3000aSetChannel to turn channels on or off and set voltage ranges, coupling, as well as analogue offset.</p><pre class="codeinput"><span class="comment">% In this example, data is only collected on Channel A so default settings</span>
+<span class="comment">% are used and channels B (and C to D for 4-channel devices) are switched off.</span>
+
+<span class="comment">% Channels       : 1 - 3 (ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_B - PS3000A_CHANNEL_D)</span>
+<span class="comment">% Enabled        : 0</span>
+<span class="comment">% Type           : 1 (ps3000aEnuminfo.enPS3000ACoupling.PS3000A_DC)</span>
+<span class="comment">% Range          : 8 (ps3000aEnuminfo.enPS3000ARange.PS3000A_5V)</span>
+<span class="comment">% Analogue Offset: 0.0</span>
+
+<span class="comment">% Execute device object function(s).</span>
+[status.setChB] = invoke(ps3000aDeviceObj, <span class="string">'ps3000aSetChannel'</span>, 1, 0, 1, 8, 0.0);
+
+<span class="keyword">if</span>(ps3000aDeviceObj.channelCount == PicoConstants.QUAD_SCOPE)
+
+    [status.setChC] = invoke(ps3000aDeviceObj, <span class="string">'ps3000aSetChannel'</span>, 2, 0, 1, 8, 0.0);
+    [status.setChD] = invoke(ps3000aDeviceObj, <span class="string">'ps3000aSetChannel'</span>, 3, 0, 1, 8, 0.0);
+
+<span class="keyword">end</span>
+</pre><h2>Set Memory Segments<a name="6"></a></h2><p>Configure number of memory segments, ideally a power of 2, query ps3000aGetMaxSegments to find the maximum number of segments for the device.</p><pre class="codeinput"><span class="comment">% nSegments : 128</span>
+
+[status.memorySegments, nMaxSamples] = invoke(ps3000aDeviceObj, <span class="string">'ps3000aMemorySegments'</span>, 128);
+</pre><h2>Query Timebase<a name="7"></a></h2><p>Use ps3000aGetTimebase2 to query the driver as to suitability of using a particular timebase index then set the 'timebase' property if required.</p><pre class="codeinput"><span class="comment">% timebase      : 42</span>
+<span class="comment">% segment index : 0</span>
+
+[status.getTimebase2, timeIntNs, maxSamples] = invoke(ps3000aDeviceObj, <span class="string">'ps3000aGetTimebase2'</span>, 42, 0);
+
+<span class="comment">% Configure property value(s).</span>
+set(ps3000aDeviceObj, <span class="string">'timebase'</span>, 42);
+</pre><h2>Set Simple Trigger<a name="8"></a></h2><p>Set a trigger on Channel A with an auto timeout - the default value for delay is used.</p><pre class="codeinput"><span class="comment">% Trigger properties and functions are located in the Instrument</span>
+<span class="comment">% Driver's Trigger group.</span>
+
+triggerGroupObj = get(ps3000aDeviceObj, <span class="string">'Trigger'</span>);
+triggerGroupObj = triggerGroupObj(1);
+
+<span class="comment">% Set the autoTriggerMs property in order to automatically trigger the</span>
+<span class="comment">% oscilloscope after 1 second if a trigger event has occurred. Set to 0 to</span>
+<span class="comment">% wait indefinitely for a trigger event.</span>
+
+set(triggerObj, <span class="string">'autoTriggerMs'</span>, 1000);
+
+<span class="comment">% Channel     : 0 (ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_A)</span>
+<span class="comment">% Threshold   : 500 (mV)</span>
+<span class="comment">% Direction   : 2 (ps3000aEnuminfo.enPS3000AThresholdDirection.PS3000A_RISING)</span>
+
+[status.setSimpleTrigger] = invoke(triggerGroupObj, <span class="string">'setSimpleTrigger'</span>, 0, 500, 2);
+</pre><h2>Setup Rapid Block Parameters and Capture Data<a name="9"></a></h2><pre class="codeinput"><span class="comment">% Rapid Block specific properties and functions are located in the Instrument</span>
+<span class="comment">% Driver's Rapidblock group.</span>
+
+rapidBlockGroupObj = get(ps3000aDeviceObj, <span class="string">'Rapidblock'</span>);
+rapidBlockGroupObj = rapidBlockGroupObj(1);
+
+<span class="comment">% Set the number of waveforms to captures</span>
+
+<span class="comment">% nCaptures : 16</span>
+
+[status.setNoOfCaptures] = invoke(rapidBlockGroupObj, <span class="string">'ps3000aSetNoOfCaptures'</span>, 16);
+
+<span class="comment">% Set number of samples to collect pre- and post-trigger. Ensure that the</span>
+<span class="comment">% total does not exceeed nMaxSamples above.</span>
+
+set(ps3000aDeviceObj, <span class="string">'numPreTriggerSamples'</span>, 2500);
+set(ps3000aDeviceObj, <span class="string">'numPostTriggerSamples'</span>, 7500);
+
+<span class="comment">% Block specific properties and functions are located in the Instrument</span>
+<span class="comment">% Driver's Block group.</span>
+
+blockGroupObj = get(ps3000aDeviceObj, <span class="string">'Block'</span>);
+blockGroupObj = blockGroupObj(1);
+
+<span class="comment">% Capture the blocks of data</span>
+
+<span class="comment">% segmentIndex : 0</span>
+
+[status.runBlock, timeIndisposedMs] = invoke(blockGroupObj, <span class="string">'runBlock'</span>, 0);
+
+<span class="comment">% Retrieve Rapid Block Data</span>
+
+<span class="comment">% numCaptures : 16</span>
+<span class="comment">% ratio       : 1</span>
+<span class="comment">% ratioMode   : 0 (ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_NONE)</span>
+
+[numSamples, overflow, chA] = invoke(rapidBlockGroupObj, <span class="string">'getRapidBlockData'</span>, 16, 1, 0);
+
+<span class="comment">% Stop the Device</span>
+[status.stop] = invoke(ps3000aDeviceObj, <span class="string">'ps3000aStop'</span>);
+</pre><pre class="codeoutput">runBlock:- Collecting block of data:
+	Timebase: 42
+	Pre-trigger samples: 2500
+	Post-trigger samples: 7500
+runBlock: Waiting for device to become ready...
+runBlock: Device ready.
+
+getRapidBlockData: Retrieving data...
+getRapidBlockData: Converting Analogue channels to milliVolts and assigning to channel array.
+getRapidBlockData: Data succesfully retrieved.
+
+</pre><h2>Process data<a name="10"></a></h2><p>Plot data values in 3D showing history of the waveforms collected.</p><pre class="codeinput"><span class="comment">% Calculate time (nanoseconds) and convert to milliseconds</span>
+<span class="comment">% Use timeIntervalNanoSeconds output from ps3000aGetTimebase2 or calculate</span>
+<span class="comment">% from Programmer's Guide.</span>
+
+timeNs = double(timeIntNs) * double([0:numSamples - 1]);
+
+<span class="comment">% Channel A</span>
+figure1 = figure(<span class="string">'Name'</span>,<span class="string">'PicoScope 3000 Series Example - Rapid Block Mode Capture'</span>, <span class="keyword">...</span>
+    <span class="string">'NumberTitle'</span>,<span class="string">'off'</span>);
+axes1 = axes(<span class="string">'Parent'</span>, figure1);
+view(axes1,[-15 24]);
+grid(axes1,<span class="string">'on'</span>);
+hold(axes1,<span class="string">'all'</span>);
+
+<span class="keyword">for</span> i = 1:16
+
+    plot3(timeNs, i * (ones(numSamples, 1)), chA(:, i));
+
+<span class="keyword">end</span>
+
+title(<span class="string">'Rapid Block Data Acquisition - Channel A'</span>);
+xlabel(<span class="string">'Time (ns)'</span>);
+ylabel(<span class="string">'Capture'</span>);
+zlabel(<span class="string">'Voltage (mV)'</span>);
+
+hold <span class="string">off</span>;
+</pre><img vspace="5" hspace="5" src="PS3000A_IC_Generic_Driver_Rapid_Block_Plot3D_01.png" alt=""> <h2>Disconnect Device<a name="11"></a></h2><pre class="codeinput"><span class="comment">% Disconnect device object from hardware.</span>
+disconnect(ps3000aDeviceObj);
+</pre><pre class="codeoutput">Close unit status: 0
+Device with serial number CU654/001 closed successfully.
+Libraries unloaded successfully.
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2014b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% PS3000A_IC_GENERIC_DRIVER_RAPID_BLOCK_PLOT3D
+% This is an example of an instrument control session using a device 
+% object. The instrument control session comprises  all the steps you 
+% are likely to take when communicating with your instrument. 
+% These steps are:
+%       
+%     1. Create a device object   
+%     2. Connect to the instrument 
+%     3. Configure properties 
+%     4. Invoke functions 
+%     5. Disconnect from the instrument 
+%  
+% To run the instrument control session, type the name of the file,
+% PS3000A_IC_Generic_Driver_Rapid_Block_Plot3D, at the MATLAB command prompt.
+% 
+% The file, PS3000A_IC_GENERIC_DRIVER_BLOCK_PLOT3D.M must be on your MATLAB PATH. 
+% For additional information on setting your MATLAB PATH, type 
+% 'help addpath' at the MATLAB command prompt.
+%
+% Example:
+%     PS3000A_IC_Generic_Driver_Rapid_Block_Plot3D;
+%
+% Description:
+%     Demonstrates how to call functions in order to capture data in 
+%     Rapid Block Mode from a PicoScope 3000 series oscilloscope using 
+%     the underlying 'A' API.
+%
+% See also ICDEVICE.
+%
+% Copyright:  Pico Technology Limited 2014 - 2015
+%
+% Author: HSM
+%
+% History:
+%   
+% 15Apr15 HSM Modified script for publishing.
+
+%% Suggested Input Test Signal
+% This example was published using the following test signals:
+%
+% * 4Vpp, Swept sine wave on Channel A (Start: 200Hz, Stop: 1kHz, Sweep type: Up, Increment: 50Hz, Increment Time: 5ms)
+
+%% Clear Command Window
+
+clc;
+
+%% Load Configuration Information
+PS3000aConfig;
+
+%% Device Connection
+
+% Create a device object. 
+% The serial number can be specified as a second input parameter.
+ps3000aDeviceObj = icdevice('picotech_ps3000a_generic.mdd', '');
+
+% Connect device object to hardware.
+connect(ps3000aDeviceObj);
+
+%% Set Channels
+% Default driver settings applied to channels are listed below - 
+% use ps3000aSetChannel to turn channels on or off and set voltage ranges, 
+% coupling, as well as analogue offset.
+
+% In this example, data is only collected on Channel A so default settings
+% are used and channels B (and C to D for 4-channel devices) are switched off.
+
+% Channels       : 1 - 3 (ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_B - PS3000A_CHANNEL_D)
+% Enabled        : 0
+% Type           : 1 (ps3000aEnuminfo.enPS3000ACoupling.PS3000A_DC)
+% Range          : 8 (ps3000aEnuminfo.enPS3000ARange.PS3000A_5V)
+% Analogue Offset: 0.0
+
+% Execute device object function(s).
+[status.setChB] = invoke(ps3000aDeviceObj, 'ps3000aSetChannel', 1, 0, 1, 8, 0.0);
+
+if(ps3000aDeviceObj.channelCount == PicoConstants.QUAD_SCOPE)
+    
+    [status.setChC] = invoke(ps3000aDeviceObj, 'ps3000aSetChannel', 2, 0, 1, 8, 0.0);
+    [status.setChD] = invoke(ps3000aDeviceObj, 'ps3000aSetChannel', 3, 0, 1, 8, 0.0);
+    
+end
+
+%% Set Memory Segments
+% Configure number of memory segments, ideally a power of 2, query
+% ps3000aGetMaxSegments to find the maximum number of segments for the
+% device.
+
+% nSegments : 128
+
+[status.memorySegments, nMaxSamples] = invoke(ps3000aDeviceObj, 'ps3000aMemorySegments', 128);
+
+%% Query Timebase
+% Use ps3000aGetTimebase2 to query the driver as to suitability of using a 
+% particular timebase index then set the 'timebase' property if required.
+
+% timebase      : 42
+% segment index : 0
+
+[status.getTimebase2, timeIntNs, maxSamples] = invoke(ps3000aDeviceObj, 'ps3000aGetTimebase2', 42, 0);
+
+% Configure property value(s).
+set(ps3000aDeviceObj, 'timebase', 42);
+
+%% Set Simple Trigger 
+% Set a trigger on Channel A with an auto timeout - the default value for delay is used.
+
+% Trigger properties and functions are located in the Instrument
+% Driver's Trigger group.
+
+triggerGroupObj = get(ps3000aDeviceObj, 'Trigger');
+triggerGroupObj = triggerGroupObj(1);
+
+% Set the autoTriggerMs property in order to automatically trigger the 
+% oscilloscope after 1 second if a trigger event has occurred. Set to 0 to
+% wait indefinitely for a trigger event.
+
+set(triggerObj, 'autoTriggerMs', 1000);
+
+% Channel     : 0 (ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_A)
+% Threshold   : 500 (mV)
+% Direction   : 2 (ps3000aEnuminfo.enPS3000AThresholdDirection.PS3000A_RISING)
+
+[status.setSimpleTrigger] = invoke(triggerGroupObj, 'setSimpleTrigger', 0, 500, 2);
+
+%% Setup Rapid Block Parameters and Capture Data
+
+% Rapid Block specific properties and functions are located in the Instrument
+% Driver's Rapidblock group.
+
+rapidBlockGroupObj = get(ps3000aDeviceObj, 'Rapidblock');
+rapidBlockGroupObj = rapidBlockGroupObj(1);
+
+% Set the number of waveforms to captures
+
+% nCaptures : 16
+
+[status.setNoOfCaptures] = invoke(rapidBlockGroupObj, 'ps3000aSetNoOfCaptures', 16);
+
+% Set number of samples to collect pre- and post-trigger. Ensure that the
+% total does not exceeed nMaxSamples above.
+
+set(ps3000aDeviceObj, 'numPreTriggerSamples', 2500);
+set(ps3000aDeviceObj, 'numPostTriggerSamples', 7500);
+
+% Block specific properties and functions are located in the Instrument
+% Driver's Block group.
+
+blockGroupObj = get(ps3000aDeviceObj, 'Block');
+blockGroupObj = blockGroupObj(1);
+
+% Capture the blocks of data
+
+% segmentIndex : 0 
+
+[status.runBlock, timeIndisposedMs] = invoke(blockGroupObj, 'runBlock', 0);
+
+% Retrieve Rapid Block Data
+
+% numCaptures : 16
+% ratio       : 1
+% ratioMode   : 0 (ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_NONE)
+
+[numSamples, overflow, chA] = invoke(rapidBlockGroupObj, 'getRapidBlockData', 16, 1, 0);
+
+% Stop the Device
+[status.stop] = invoke(ps3000aDeviceObj, 'ps3000aStop');
+
+%% Process data
+% Plot data values in 3D showing history of the waveforms collected.
+
+% Calculate time (nanoseconds) and convert to milliseconds
+% Use timeIntervalNanoSeconds output from ps3000aGetTimebase2 or calculate 
+% from Programmer's Guide.
+
+timeNs = double(timeIntNs) * double([0:numSamples - 1]);
+
+% Channel A
+figure1 = figure('Name','PicoScope 3000 Series Example - Rapid Block Mode Capture', ...
+    'NumberTitle','off');
+axes1 = axes('Parent', figure1);
+view(axes1,[-15 24]);
+grid(axes1,'on');
+hold(axes1,'all');
+
+for i = 1:16
+    
+    plot3(timeNs, i * (ones(numSamples, 1)), chA(:, i));
+    
+end
+
+title('Rapid Block Data Acquisition - Channel A');
+xlabel('Time (ns)');
+ylabel('Capture');
+zlabel('Voltage (mV)');
+
+hold off;
+
+%% Disconnect Device
+
+% Disconnect device object from hardware.
+disconnect(ps3000aDeviceObj);
+
+##### SOURCE END #####
+--></body></html>

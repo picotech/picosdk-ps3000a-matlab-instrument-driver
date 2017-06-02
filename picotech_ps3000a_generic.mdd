@@ -6,7 +6,7 @@
    <InstrumentType>Oscilloscope</InstrumentType>
    <InstrumentManufacturer>Pico Technology Ltd.</InstrumentManufacturer>
    <InstrumentModel>PicoScope 3000 Series (A API)</InstrumentModel>
-   <InstrumentVersion>1.2.23</InstrumentVersion>
+   <InstrumentVersion>1.2.24</InstrumentVersion>
    <Identify/>
    <Reset/>
    <Selftest/>
@@ -17,31 +17,31 @@
 % OBJ is the device object.
 % End of function definition - DO NOT EDIT
 
-% Copyright (C) 2014 - 2017 Pico Technology Ltd. All rights reserved. 
+% Copyright © 2014 - 2017 Pico Technology Ltd. All rights reserved. 
 % You may copy and distribute this file as long as it remains unmodified. 
 % SB
     
-    fprintf('\nCopyright (C) 2014 - 2017 Pico Technology Ltd. All rights reserved.\n');
+    fprintf('\nCopyright © 2014-2017 Pico Technology Ltd. All rights reserved.\n');
     fprintf('\n');
     fprintf('PicoScope 3000 Series MATLAB Instrument Driver\n');
     fprintf('\n');
 
     % Only load library once 
-    if(libisloaded('ps3000a'))
+    if (libisloaded('ps3000a'))
        
         % Do nothing
         
     else
        
-        if(ispc)
+        if (ispc)
             
             loadlibrary('ps3000a.dll', @ps3000aMFile);
             
-        elseif(ismac)
+        elseif (ismac)
             
                 loadlibrary('libps3000a.dylib', @ps3000aMFile, 'alias', 'ps3000a');
             
-        elseif(isunix)
+        elseif (isunix)
                 
                 loadlibrary('libps3000a.so', @ps3000aMFile, 'alias', 'ps3000a');
             
@@ -54,21 +54,21 @@
     end
 
     % Only load library once 
-    if(libisloaded('ps3000aWrap'))
+    if (libisloaded('ps3000aWrap'))
 
         % Do nothing
         
     else
         
-        if(ispc)
+        if (ispc)
             
             loadlibrary('ps3000aWrap.dll', @ps3000aWrapMFile);
             
-        elseif(ismac)
+        elseif (ismac)
             
             loadlibrary('libps3000awrap.dylib', @ps3000aWrapMFile, 'alias', 'ps3000aWrap');
             
-        elseif(isunix)   
+        elseif (isunix)   
 
             loadlibrary('libps3000aWrap.so', @ps3000aWrapMFile, 'alias', 'ps3000aWrap');
             
@@ -93,7 +93,7 @@
     
     end
 
-    if(isstruct(evalin('base', 'ps3000aEnuminfo')) &amp;&amp; isstruct(evalin('base', 'ps3000aStructs')))
+    if (isstruct(evalin('base', 'ps3000aEnuminfo')) &amp;&amp; isstruct(evalin('base', 'ps3000aStructs')))
     
         % Do nothing - structures have been loaded
     
@@ -102,6 +102,12 @@
         error('Failed to load enumerations and/or structures from ps3000aMFile');
     
     end
+    
+    % Obtain flag to indicate if functions should output text to Command
+    % Window
+    % -------------------------------
+    
+    obj.DriverData.displayOutput = obj.displayOutput;
     
     % Enumerate units - only displayed if driver is being used via command
     % line
@@ -113,11 +119,11 @@
     [status, count, serials, serialLth] = calllib('ps3000a', ...
         'ps3000aEnumerateUnits',  count, serials, serialLth);
     
-    if(status == PicoStatus.PICO_OK)
+    if (status == PicoStatus.PICO_OK)
         
         fprintf('Number of units found: %d\n\nSerial number(s): %s\n\n', count, serials);
         
-    elseif(status == PicoStatus.PICO_NOT_FOUND)
+    elseif (status == PicoStatus.PICO_NOT_FOUND)
         
         error('No units found.');
         
@@ -241,6 +247,9 @@
             error('Connect: Unable to initialise device with wrapper - max. number of PicoScope 3000 Series devices is 4.');
             
         end
+        
+        % Set whether to display output
+        obj.DriverData.displayOutput = PicoConstants.TRUE;
 
         % Set device parameters
         invoke(obj, 'resetDevice');
@@ -589,6 +598,43 @@ analogueOffset - the offset on the channel.
                <Description>The number of digital ports on the device.
 
 For non-MSO devices this will be set to 0.</Description>
+            </Property>
+            <Property>
+               <Name>displayOutput</Name>
+               <Location>parent</Location>
+               <CapabilityGroup>Base</CapabilityGroup>
+               <Type>MCode</Type>
+               <Code>
+                  <GetMCode>function propertyValue = getProperty(obj, propertyName)
+% Return a property value.
+%   This function is called to return the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+    propertyValue = obj.DriverData.displayOutput;</GetMCode>
+                  <SetMCode>function set(obj, propertyName, propertyValue)
+% Set a property value.
+%   This function is called to set the device or group object property
+%   value. If the property is a group property, OBJ is the group object. If
+%   the property is a base device property, OBJ is the device object.
+
+    obj.DriverData.displayOutput = propertyValue;</SetMCode>
+               </Code>
+               <PermissibleType>
+                  <Type>Double</Type>
+                  <Constraint>enum</Constraint>
+                  <ConstraintValue>
+                     <Value>0.0</Value>
+                     <Value>1.0</Value>
+                  </ConstraintValue>
+               </PermissibleType>
+               <DefaultValue>0.0</DefaultValue>
+               <ReadOnly>never</ReadOnly>
+               <Description>Enumeration value to select whether to display output from function calls in the MATLAB Command Window.
+
+Set to 1 to display output, 0 to hide output.
+
+Note: Output will still be sent to the Command Window when calling the icdevice, connect and disconnect functions. Warning and error messages will still continue to be displayed from function calls.</Description>
             </Property>
             <Property>
                <Name>firstRange</Name>
@@ -2574,10 +2620,11 @@ Analogue Offset : 0.0V</Description>
 % For group functions, OBJ is the group object. For
 % base device functions, OBJ is the device object.
 
+    deviceObj = get(obj, 'Parent');
+    
     % Check ratio mode is not aggregated
     if(ratioMode ~= evalin('base', 'ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_AGGREGATE'))
-
-        deviceObj = get(obj, 'Parent');
+    
         unitHandle = deviceObj.DriverData.unitHandle;
 
         channelCount = deviceObj.DriverData.channelCount;
@@ -2612,13 +2659,17 @@ Analogue Offset : 0.0V</Description>
         % total number of samples to set for data buffers
         totalSamples = deviceObj.DriverData.numPreTriggerSamples + deviceObj.DriverData.numPostTriggerSamples;
 
-        fprintf('getBlockData: Setting up data buffers...\n');
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+            
+            fprintf('getBlockData: Setting up data buffers...\n');
+            
+        end
 
         for ch = 1:channelCount
 
             % Set Data Buffer if channel is enabled - index 1 indicates if
             % channel is enabled
-            if(channelSettings(ch,1) == PicoConstants.TRUE)
+            if (channelSettings(ch,1) == PicoConstants.TRUE)
 
                 % Store array of libpointers
                 pABuffer(ch) = libpointer('int16Ptr', zeros(totalSamples, 1, 'int16'));
@@ -2627,7 +2678,7 @@ Analogue Offset : 0.0V</Description>
                     unitHandle, (ch - 1), pABuffer(ch), totalSamples, ...
                     segmentIndex, ratioMode);
 
-                if(setBufferStatus ~= PicoStatus.PICO_OK)
+                if (setBufferStatus ~= PicoStatus.PICO_OK)
 
                     error('getBlockData: Set Data Buffer for Channel %d status code %d', ...
                         (ch - 1), setBufferStatus);
@@ -2646,7 +2697,7 @@ Analogue Offset : 0.0V</Description>
 
             % Set Data Buffer if channel is enabled - index 1 indicates if
             % channel is enabled
-            if(portSettings(port,1) == PicoConstants.TRUE)
+            if (portSettings(port,1) == PicoConstants.TRUE)
 
                 % Store array of libpointers
                 pDBuffer(port) = libpointer('int16Ptr', zeros(totalSamples, 1, 'int16'));
@@ -2655,7 +2706,7 @@ Analogue Offset : 0.0V</Description>
                     unitHandle, (port + 127), pDBuffer(port), totalSamples, ... 'port 0 = 128, port 1 = 129
                     segmentIndex, ratioMode);
 
-                if(setBufferStatus ~= PicoStatus.PICO_OK)
+                if (setBufferStatus ~= PicoStatus.PICO_OK)
 
                     error('getBlockData: Set Data Buffer for Digital Port %d error code %d', ...
                         (port - 1), setBufferStatus);
@@ -2666,14 +2717,18 @@ Analogue Offset : 0.0V</Description>
 
         end
 
-        fprintf('getBlockData: Retrieving data...\n');
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+            
+            fprintf('getBlockData: Retrieving data...\n');
+            
+        end
 
         % Call ps3000aGetValues
         [getValuesStatus, numSamples, overflow] = ...
             calllib('ps3000a', 'ps3000aGetValues', unitHandle, startIndex, ...
             totalSamples, ratio, ratioMode, segmentIndex, overflow);
 
-        if(getValuesStatus == PicoStatus.PICO_OK)
+        if (getValuesStatus == PicoStatus.PICO_OK)
 
             if(portCount &gt; 0)
 
@@ -2705,7 +2760,11 @@ Analogue Offset : 0.0V</Description>
 
             end
 
-            fprintf('getBlockData: Assigning Analogue data to array and converting to millivolts.\n');
+            if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+                
+                fprintf('getBlockData: Assigning analog data to array and converting to millivolts.\n');
+                
+            end
 
             % Obtain max ADC count value
             maxADCValue = double(deviceObj.DriverData.maxADCValue);
@@ -2754,7 +2813,11 @@ Analogue Offset : 0.0V</Description>
 
             end
 
-            fprintf('getBlockData: Data succesfully retrieved.\n');
+            if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+                
+                fprintf('getBlockData: Data succesfully retrieved.\n');
+                
+            end
 
         else
 
@@ -2810,10 +2873,11 @@ Please also refer to the ps3000aSetDataBuffer and ps3000aGetValues functions in 
 % For group functions, OBJ is the group object. For
 % base device functions, OBJ is the device object.
 
+    deviceObj = get(obj, 'Parent');
+    
     % Check ratio mode is not aggregated
-    if(ratioMode ~= evalin('base', 'ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_AGGREGATE'))
-
-        deviceObj = get(obj, 'Parent');
+    if (ratioMode ~= evalin('base', 'ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_AGGREGATE'))
+ 
         unitHandle = deviceObj.DriverData.unitHandle;
 
         channelCount = deviceObj.DriverData.channelCount;    
@@ -2847,7 +2911,11 @@ Please also refer to the ps3000aSetDataBuffer and ps3000aGetValues functions in 
         % total number of samples to set for data buffers
         totalSamples = deviceObj.DriverData.numPreTriggerSamples + deviceObj.DriverData.numPostTriggerSamples;
 
-        fprintf('getEtsBlockData: Setting up data buffers...\n');
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+            
+            fprintf('getEtsBlockData: Setting up data buffers...\n');
+            
+        end
 
         for ch = 1:channelCount
 
@@ -2907,14 +2975,18 @@ Please also refer to the ps3000aSetDataBuffer and ps3000aGetValues functions in 
         status = calllib('ps3000a', 'ps3000aSetEtsTimeBuffer', ...
                     unitHandle, pEtsTimeBuffer, totalSamples);
 
-        fprintf('getEtsBlockData: Retrieving data...\n');
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+            
+            fprintf('getEtsBlockData: Retrieving data...\n');
+            
+        end
 
         % Call ps3000aGetValues
         [getValuesStatus, numSamples, overflow] = ...
             calllib('ps3000a', 'ps3000aGetValues', unitHandle, startIndex, ...
             totalSamples, ratio, ratioMode, segmentIndex, overflow);
 
-        if(getValuesStatus == PicoStatus.PICO_OK)
+        if (getValuesStatus == PicoStatus.PICO_OK)
             
             % Retrieve ETS times
             etsTimes = pEtsTimeBuffer.Value;
@@ -2950,7 +3022,11 @@ Please also refer to the ps3000aSetDataBuffer and ps3000aGetValues functions in 
 
             end
 
-            fprintf('getEtsBlockData: Assigning Analogue data to array and converting to millivolts.\n');
+            if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+                
+                fprintf('getEtsBlockData: Assigning analog data to array and converting to millivolts.\n');
+                
+            end
 
             % Obtain max ADC count value
             maxADCValue = double(deviceObj.DriverData.maxADCValue);
@@ -2999,7 +3075,11 @@ Please also refer to the ps3000aSetDataBuffer and ps3000aGetValues functions in 
 
             end
 
-            fprintf('getEtsBlockData: Data succesfully retrieved.\n');
+            if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+                
+                fprintf('getEtsBlockData: Data succesfully retrieved.\n');
+                
+            end
 
         else
 
@@ -3064,7 +3144,7 @@ Please also refer to the ps3000aSetEtsTimeBuffer, ps3000aSetDataBuffer and ps300
         'ps3000aGetTriggerTimeOffset', deviceObj.DriverData.unitHandle, ...
         timeUpper, timeLower, timeUnits, segmentIndex);
     
-    if(status ~= PicoStatus.PICO_OK)
+    if (status ~= PicoStatus.PICO_OK)
            
         error('ps3000aGetTriggerTimeOffset: Status code: %d. Please refer to the PicoStatus.m file.', status); 
         
@@ -3111,7 +3191,7 @@ For further information on the ps3000aGetTriggerTimeOffset function please refer
         'ps3000aGetTriggerTimeOffset64', deviceObj.DriverData.unithandle, ...
         time, timeUnits, segmentIndex);
     
-    if(status ~= PicoStatus.PICO_OK)
+    if (status ~= PicoStatus.PICO_OK)
            
         error('ps3000aGetTriggerTimeOffset64: Status code: %d. Please refer to the PicoStatus.m file.', status);  
         
@@ -3155,7 +3235,7 @@ For further information on the ps3000aGetTriggerTimeOffset64 function please ref
         deviceObj.DriverData.unitHandle, startIndex, pNumSamples, downSampleRatio, ....
         downSampleRatioMode, segmentIndex, pOverflow);
     
-    if(status ~= PicoStatus.PICO_OK)
+    if (status ~= PicoStatus.PICO_OK)
            
         error('ps3000aGetValues: Status code: %d. Please refer to the PicoStatus.m file.', status);   
     
@@ -3202,7 +3282,7 @@ For further information on the ps3000aGetValues function please refer to the Pic
     [status, ready] = calllib('ps3000a', 'ps3000aIsReady', ...
                             deviceObj.DriverData.unitHandle, ready);
 
-    if(status == PicoStatus.PICO_OK || status == PicoStatus.PICO_BUSY)
+    if (status == PicoStatus.PICO_OK || status == PicoStatus.PICO_BUSY)
 
         % Do nothing
 
@@ -3253,8 +3333,12 @@ For further information on the ps3000aIsReady function please refer to the PicoS
     preTriggerSamples = deviceObj.DriverData.numPreTriggerSamples;
     postTriggerSamples = deviceObj.DriverData.numPostTriggerSamples;
     
-    fprintf('runBlock:- Collecting block of data:\n\tTimebase: %u\n\tPre-trigger samples: %u\n\tPost-trigger samples: %u\n', ...
-        timebaseIndex, preTriggerSamples, postTriggerSamples);
+    if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+        
+        fprintf('runBlock:- Collecting block of data:\n\tTimebase: %u\n\tPre-trigger samples: %u\n\tPost-trigger samples: %u\n', ...
+            timebaseIndex, preTriggerSamples, postTriggerSamples);
+        
+    end
 
     [status, timeIndisposedMs] = calllib('ps3000a', 'ps3000aRunBlock', ...
         unitHandle, preTriggerSamples, postTriggerSamples, timebaseIndex, ...
@@ -3475,8 +3559,12 @@ For further information on the ps3000aSetEtsTimeBuffers function please refer to
     preTriggerSamples = deviceObj.DriverData.numPreTriggerSamples;
     postTriggerSamples = deviceObj.DriverData.numPostTriggerSamples;
     
-    fprintf('runBlock:- Collecting block of data:\n\tTimebase: %u\n\tPre-trigger samples: %u\n\tPost-trigger samples: %u\n', ...
-        timebaseIndex, preTriggerSamples, postTriggerSamples);
+    if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+        
+        fprintf('runBlock:- Collecting block of data:\n\tTimebase: %u\n\tPre-trigger samples: %u\n\tPost-trigger samples: %u\n', ...
+            timebaseIndex, preTriggerSamples, postTriggerSamples);
+        
+    end
 
     [runBlockStatus, timeIndisposedMs] = calllib('ps3000a', 'ps3000aRunBlock', ...
         unitHandle, preTriggerSamples, postTriggerSamples, timebaseIndex, ...
@@ -3488,16 +3576,20 @@ For further information on the ps3000aSetEtsTimeBuffers function please refer to
         
     end
     
-    fprintf('runBlock: Waiting for device to become ready...\n');
+    if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+        
+        fprintf('runBlock: Waiting for device to become ready...\n');
+        
+    end
     
     ready = 0; % Initialise value for pointer
     
-    while(ready == 0)
+    while (ready == 0)
         
         [readyStatus, ready] = calllib('ps3000a', 'ps3000aIsReady', ...
                                 unitHandle, ready);
                         
-        if(readyStatus == PicoStatus.PICO_OK || readyStatus == PicoStatus.PICO_BUSY)
+        if (readyStatus == PicoStatus.PICO_OK || readyStatus == PicoStatus.PICO_BUSY)
            
             % Do nothing
             
@@ -3509,7 +3601,11 @@ For further information on the ps3000aSetEtsTimeBuffers function please refer to
                         
     end
     
-    fprintf('runBlock: Device ready.\n\n');
+    if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+    
+        fprintf('runBlock: Device ready.\n\n');
+        
+    end
     
     % Other conditions would have been captured.
     if(runBlockStatus == PicoStatus.PICO_OK &amp;&amp; readyStatus == PicoStatus.PICO_OK)
@@ -3855,242 +3951,255 @@ Logic Level	      : +1.5V
 % For group functions, OBJ is the group object. For
 % base device functions, OBJ is the device object.
 
-% Check ratio mode is not aggregated
-if(ratioMode ~= evalin('base', 'ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_AGGREGATE'))
-    
     deviceObj = get(obj, 'Parent');
-    unitHandle = deviceObj.DriverData.unitHandle;
     
-    channelCount = deviceObj.DriverData.channelCount;
-    
-    portCount = deviceObj.DriverData.digitalPortCount;
-    
-    % Retrieve channel settings - channel x data field matrix
-    channelSettings = deviceObj.DriverData.channelSettings;
-    
-    % Retrieve port settings - port x data field matrix
-    portSettings = deviceObj.DriverData.digitalPortSettings;
-    
-    % Create empty arrays for channel data.
-    channelA = [];
-    channelB = [];
-    channelC = [];
-    channelD = [];
-    
-    portD0 = [];
-    portD1 = [];
-    
-    % Initialise variable for array of libpointers
-    pABuffer(channelCount, numCaptures) = libpointer;
-    
-    if(portCount &gt; 0)
-        
-        pDBuffer(portCount, numCaptures) = libpointer;
-        
-    end
-    
-    % Initialise array for status values
-    setBufferStatus = zeros(channelCount, numCaptures, 'uint32');
-    
-    % total number of samples to set for data buffers
-    totalSamples = deviceObj.DriverData.numPreTriggerSamples + deviceObj.DriverData.numPostTriggerSamples;
-    
-    % Create a 2D matrix of libpointers to allocate memory space for
-    % each channel and segment combination
-    for segment = 1:numCaptures
-        
-        for ch = 1:channelCount
-            
-            % Set Data Buffer if channel is enabled
-            if(channelSettings(ch, 1) == PicoConstants.TRUE)
-                
-                % Store array of libpointers
-                pABuffer(ch, segment) = libpointer('int16Ptr', zeros(totalSamples, 1, 'int16'));
-                
-                setBufferStatus(ch, segment) = calllib('ps3000a', 'ps3000aSetDataBuffer', ...
-                    unitHandle, (ch - 1), pABuffer(ch, segment), totalSamples, ...
-                    (segment - 1), ratioMode);
-                
-                if(setBufferStatus(ch, segment) ~= PicoStatus.PICO_OK)
-                    
-                    error('getRapidBlockData: Set Data Buffer for Channel %d Segment % Status code %d', ...
-                        (ch - 1), (segment - 1), setBufferStatus);
-                    
-                end
-                
-            end
-            
-        end
-        
-        for port = 1:portCount
-            
-            % Set Data Buffer if channel is enabled - index 1 indicates if
-            % channel is enabled
-            if(portSettings(port,1) == PicoConstants.TRUE)
-                
-                % Store array of libpointers
-                pDBuffer(port, segment) = libpointer('int16Ptr', zeros(totalSamples, 1, 'int16'));
-                
-                setBufferStatus = calllib('ps3000a', 'ps3000aSetDataBuffer', ...
-                    unitHandle, (port + 127), pDBuffer(port, segment), totalSamples, ... 'port 0 = 128, port 1 = 129
-                    (segment-1), ratioMode);
-                
-                if(setBufferStatus ~= PicoStatus.PICO_OK)
-                    
-                    error('getRapidBlockData: Set Data Buffer for port %d Segment % Status code %d', ...
-                        (port - 1), (segment - 1), setBufferStatus);
-                    
-                end
-                
-            end
-            
-        end
-        
-    end
-    
-    fprintf('getRapidBlockData: Retrieving data...\n');
-    
-    fromSegmentIndex = 0;
-    toSegmentIndex = numCaptures - 1;
-    
-    overflowSize = (toSegmentIndex - fromSegmentIndex) + 1;
-    overflowPtr = libpointer('int16Ptr', zeros(overflowSize, 1, 'int16'));
-    overflow = 0;
-    
-    % Call ps3000aGetValuesBulk
-    [getValuesBulkStatus, numSamples] = calllib('ps3000a', ...
-        'ps3000aGetValuesBulk', unitHandle, totalSamples, fromSegmentIndex, ...
-        toSegmentIndex, ratio, ratioMode, overflowPtr);
-    
-    overflow = overflowPtr.Value;
-    
-    if(getValuesBulkStatus == PicoStatus.PICO_OK)
-        
+    % Check ratio mode is not aggregated
+    if (ratioMode ~= evalin('base', 'ps3000aEnuminfo.enPS3000ARatioMode.PS3000A_RATIO_MODE_AGGREGATE'))
+
+        unitHandle = deviceObj.DriverData.unitHandle;
+
+        channelCount = deviceObj.DriverData.channelCount;
+
+        portCount = deviceObj.DriverData.digitalPortCount;
+
+        % Retrieve channel settings - channel x data field matrix
+        channelSettings = deviceObj.DriverData.channelSettings;
+
+        % Retrieve port settings - port x data field matrix
+        portSettings = deviceObj.DriverData.digitalPortSettings;
+
+        % Create empty arrays for channel data.
+        channelA = [];
+        channelB = [];
+        channelC = [];
+        channelD = [];
+
+        portD0 = [];
+        portD1 = [];
+
+        % Initialise variable for array of libpointers
+        pABuffer(channelCount, numCaptures) = libpointer;
+
         if(portCount &gt; 0)
-            
-            fprintf('getRapidBlockData: Retrieving digital port data and assigning to port array.\n');
-        
+
+            pDBuffer(portCount, numCaptures) = libpointer;
+
         end
+
+        % Initialise array for status values
+        setBufferStatus = zeros(channelCount, numCaptures, 'uint32');
+
+        % total number of samples to set for data buffers
+        totalSamples = deviceObj.DriverData.numPreTriggerSamples + deviceObj.DriverData.numPostTriggerSamples;
+
+        % Create a 2D matrix of libpointers to allocate memory space for
+        % each channel and segment combination
+        for segment = 1:numCaptures
+
+            for ch = 1:channelCount
+
+                % Set Data Buffer if channel is enabled
+                if(channelSettings(ch, 1) == PicoConstants.TRUE)
+
+                    % Store array of libpointers
+                    pABuffer(ch, segment) = libpointer('int16Ptr', zeros(totalSamples, 1, 'int16'));
+
+                    setBufferStatus(ch, segment) = calllib('ps3000a', 'ps3000aSetDataBuffer', ...
+                        unitHandle, (ch - 1), pABuffer(ch, segment), totalSamples, ...
+                        (segment - 1), ratioMode);
+
+                    if(setBufferStatus(ch, segment) ~= PicoStatus.PICO_OK)
+
+                        error('getRapidBlockData: Set Data Buffer for Channel %d Segment % Status code %d', ...
+                            (ch - 1), (segment - 1), setBufferStatus);
+
+                    end
+
+                end
+
+            end
+
+            for port = 1:portCount
+
+                % Set Data Buffer if channel is enabled - index 1 indicates if
+                % channel is enabled
+                if(portSettings(port,1) == PicoConstants.TRUE)
+
+                    % Store array of libpointers
+                    pDBuffer(port, segment) = libpointer('int16Ptr', zeros(totalSamples, 1, 'int16'));
+
+                    setBufferStatus = calllib('ps3000a', 'ps3000aSetDataBuffer', ...
+                        unitHandle, (port + 127), pDBuffer(port, segment), totalSamples, ... 'port 0 = 128, port 1 = 129
+                        (segment-1), ratioMode);
+
+                    if(setBufferStatus ~= PicoStatus.PICO_OK)
+
+                        error('getRapidBlockData: Set Data Buffer for port %d Segment % Status code %d', ...
+                            (port - 1), (segment - 1), setBufferStatus);
+
+                    end
+
+                end
+
+            end
+
+        end
+
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
         
-        for port = 1: portCount
+            fprintf('getRapidBlockData: Retrieving data...\n');
             
-            if(portSettings(port,1) == PicoConstants.TRUE)
-                
-                % Obtain a cell array representing the waveforms for
-                % the channel
-                
-                bufferCells = get(pDBuffer(port, :),'Value');
-                
-                % Combine the cell contents into a total_samples x
-                % numCaptures array               
-               
-                if(numCaptures &gt; 1)
-                    
-                    bufferCells = horzcat(bufferCells{1:end});                    
-                   
+        end
+
+        fromSegmentIndex = 0;
+        toSegmentIndex = numCaptures - 1;
+
+        overflowSize = (toSegmentIndex - fromSegmentIndex) + 1;
+        overflowPtr = libpointer('int16Ptr', zeros(overflowSize, 1, 'int16'));
+        overflow = 0;
+
+        % Call ps3000aGetValuesBulk
+        [getValuesBulkStatus, numSamples] = calllib('ps3000a', ...
+            'ps3000aGetValuesBulk', unitHandle, totalSamples, fromSegmentIndex, ...
+            toSegmentIndex, ratio, ratioMode, overflowPtr);
+
+        overflow = overflowPtr.Value;
+
+        if(getValuesBulkStatus == PicoStatus.PICO_OK)
+
+            if(portCount &gt; 0)
+
+                fprintf('getRapidBlockData: Retrieving digital port data and assigning to port array.\n');
+
+            end
+
+            for port = 1: portCount
+
+                if(portSettings(port,1) == PicoConstants.TRUE)
+
+                    % Obtain a cell array representing the waveforms for
+                    % the channel
+
+                    bufferCells = get(pDBuffer(port, :),'Value');
+
+                    % Combine the cell contents into a total_samples x
+                    % numCaptures array               
+
+                    if(numCaptures &gt; 1)
+
+                        bufferCells = horzcat(bufferCells{1:end});                    
+
+                    end
+
+
+                    switch(port + 127)
+
+                        case evalin('base', 'ps3000aEnuminfo.enPS3000ADigitalPort.PS3000A_DIGITAL_PORT0')
+
+                            portD0 = bufferCells;
+
+                        case evalin('base', 'ps3000aEnuminfo.enPS3000ADigitalPort.PS3000A_DIGITAL_PORT1')
+
+                            portD1 = bufferCells;
+
+                        otherwise
+
+                            % Do nothing
+
+                    end
+
                 end
+
+            end
+
+            if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
                 
-                
-                switch(port + 127)
-                    
-                    case evalin('base', 'ps3000aEnuminfo.enPS3000ADigitalPort.PS3000A_DIGITAL_PORT0')
-                        
-                        portD0 = bufferCells;
-                        
-                    case evalin('base', 'ps3000aEnuminfo.enPS3000ADigitalPort.PS3000A_DIGITAL_PORT1')
-                        
-                        portD1 = bufferCells;
-                        
-                    otherwise
-                        
-                        % Do nothing
-                        
-                end
+                fprintf('getRapidBlockData: Converting analog channels to millivolts and assigning to channel array.\n');
                 
             end
-            
-        end
-        
-        fprintf('getRapidBlockData: Converting Analogue channels to millivolts and assigning to channel array.\n');
-        
-        % Obtain max ADC count value
-        maxADCValue = double(deviceObj.DriverData.maxADCValue);
-        
-        % Retrieve data values for enabled channels
-        for ch = 1:channelCount
-            
-            if(channelSettings(ch,1) == PicoConstants.TRUE)
-                
-                scopeInputIndex = channelSettings(ch, 3) + 1;
-                voltageRange = PicoConstants.SCOPE_INPUT_RANGES(scopeInputIndex);
-                
-                % Obtain a cell array representing the waveforms for
-                % the channel
-                
-                bufferCells = get(pABuffer(ch, :),'Value');
-                
-                % Combine the cell contents into a total_samples x
-                % numCaptures array               
-               
-                if(numCaptures &gt; 1)
-                    
-                    bufferCells = horzcat(bufferCells{1:end});                    
-                   
+
+            % Obtain max ADC count value
+            maxADCValue = double(deviceObj.DriverData.maxADCValue);
+
+            % Retrieve data values for enabled channels
+            for ch = 1:channelCount
+
+                if(channelSettings(ch,1) == PicoConstants.TRUE)
+
+                    scopeInputIndex = channelSettings(ch, 3) + 1;
+                    voltageRange = PicoConstants.SCOPE_INPUT_RANGES(scopeInputIndex);
+
+                    % Obtain a cell array representing the waveforms for
+                    % the channel
+
+                    bufferCells = get(pABuffer(ch, :),'Value');
+
+                    % Combine the cell contents into a total_samples x
+                    % numCaptures array               
+
+                    if(numCaptures &gt; 1)
+
+                        bufferCells = horzcat(bufferCells{1:end});                    
+
+                    end
+
+                    bufferValues = adc2mv(bufferCells, voltageRange, ...
+                        maxADCValue);
+
+                    switch(ch - 1)
+
+                        case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_A')
+
+                            channelA = bufferValues;
+
+                        case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_B')
+
+                            channelB = bufferValues;
+
+                        case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_C')
+
+                            channelC = bufferValues;
+
+                        case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_D')
+
+                            channelD = bufferValues;
+
+                        otherwise
+
+                            % Do nothing
+
+                    end               
+
                 end
+
+            end
+
+            if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
                 
-                bufferValues = adc2mv(bufferCells, voltageRange, ...
-                    maxADCValue);
-                
-                switch(ch - 1)
-                    
-                    case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_A')
-                        
-                        channelA = bufferValues;
-                        
-                    case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_B')
-                        
-                        channelB = bufferValues;
-                        
-                    case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_C')
-                        
-                        channelC = bufferValues;
-                        
-                    case evalin('base', 'ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_D')
-                        
-                        channelD = bufferValues;
-                        
-                    otherwise
-                        
-                        % Do nothing
-                        
-                end               
+                fprintf('getRapidBlockData: Data succesfully retrieved.\n\n');
                 
             end
-            
+
+            clear pABuffer;
+
+            clear pDBuffer
+
+            clear bufferValues;
+
+            clear bufferCells;
+
+        else
+
+            error('getRapidBlockData: Error retrieving data values - code: %d', getValuesBulkStatus);
+
         end
-        
-        fprintf('getRapidBlockData: Data succesfully retrieved.\n\n');
-        
-        clear pABuffer;
-        
-        clear pDBuffer
-        
-        clear bufferValues;
-        
-        clear bufferCells;
-        
+
+
     else
-        
-        error('getRapidBlockData: Error retrieving data values - code: %d', getValuesBulkStatus);
-        
-    end
-    
-    
-else
-    
-    error('getRapidBlockData: Aggregate Mode data collection not supported by this function.');
-    
-end</MCode>
+
+        error('getRapidBlockData: Aggregate Mode data collection not supported by this function.');
+
+    end</MCode>
                </Code>
                <Description>getRapidBlockData(obj, numCaptures, ratio, ratioMode) retrieves waveforms captured using rapid block mode. The waveforms must have been collected sequentially and in the same run.
 
@@ -5841,8 +5950,12 @@ For further information on the ps3000aNoOfStreamingValues function please refer 
         autoStop, downSampleRatio, downSampleRatioMode, overviewBufferSize);
     
     if(status == PicoStatus.PICO_OK)
-           
-        fprintf('ps3000aRunStreaming:- Sample interval %d', sampleInterval);
+        
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+            
+            fprintf('ps3000aRunStreaming:- Sample interval %d', sampleInterval);
+            
+        end
         
         switch(sampleIntervalTimeUnits)
        
@@ -5876,7 +5989,11 @@ For further information on the ps3000aNoOfStreamingValues function please refer 
         
         end
         
-        fprintf('%s\n', sampleIntervalTimeUnitsStr);
+        if (deviceObj.DriverData.displayOutput == PicoConstants.TRUE)
+            
+            fprintf('%s\n', sampleIntervalTimeUnitsStr);
+            
+        end
         
         clear streamingInterval;
         clear femtosecondsEnum;

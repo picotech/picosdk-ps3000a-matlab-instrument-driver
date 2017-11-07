@@ -20,16 +20,20 @@ This Instrument Driver package includes the following:
 
 The driver will work with the following PicoScope models:
 
+* PicoScope 3203D 
 * PicoScope 3204A/B/D  
 * PicoScope 3205A/B/D   
 * PicoScope 3206A/B/D
 * PicoScope 3207A/B
+* PicoScope 3203D MSO
 * PicoScope 3204MSO/D MSO 
 * PicoScope 3205MSO/D MSO   
 * PicoScope 3206MSO/D MSO
+* PicoScope 3403D
 * PicoScope 3404A/B/D  
 * PicoScope 3405A/B/D   
 * PicoScope 3406A/B/D
+* PicoScope 3403D MSO
 * PicoScope 3404D MSO 
 * PicoScope 3405D MSO   
 * PicoScope 3406D MSO

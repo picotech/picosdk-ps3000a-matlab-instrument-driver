@@ -135,7 +135,7 @@ triggerGroupObj = triggerGroupObj(1);
 % oscilloscope after 1 second if a trigger event has not occurred. Set to 0
 % to wait indefinitely for a trigger event.
 
-set(triggerObj, 'autoTriggerMs', 1000);
+set(triggerGroupObj, 'autoTriggerMs', 1000);
 
 % Channel     : 0 (ps3000aEnuminfo.enPS3000AChannel.PS3000A_CHANNEL_A)
 % Threshold   : 500 (mV)

@@ -2,6 +2,14 @@
 
 help/* linguist-documentation 
 
+# Set the default behavior, in case people don't have core.autocrlf set.
+* text=auto
+
+# Source and output files
+*.m text
+*.xml text
+*.html text
+
 # Recommended by MathWorks
 
 *.mlx -crlf -diff -merge

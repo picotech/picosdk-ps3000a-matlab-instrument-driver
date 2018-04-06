@@ -97,8 +97,8 @@ See [LICENSE.md](LICENSE.md) for license terms.
 
 *PicoScope* is a registered trademark of Pico Technology Ltd. 
 
-*MATLAB* is a registered trademark of The Mathworks, Inc. *Signal Processing Toolbox*
-is a trademark of The Mathworks, Inc.
+*MATLAB* is a registered trademark of The Mathworks, Inc. *Instrument Control Toolbox* and *Signal Processing Toolbox*
+are trademarks of The Mathworks, Inc.
 
 *Windows* is a registered trademark of Microsoft Corporation. 
 

@@ -104,5 +104,5 @@ are trademarks of The Mathworks, Inc.
 
 *Linux* is the registered trademark of Linus Torvalds in the U.S. and other countries.
 
-Copyright © 2012-2017 Pico Technology Ltd. All rights reserved.
+Copyright © 2012-2018 Pico Technology Ltd. All rights reserved.
 

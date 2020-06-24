@@ -371,6 +371,7 @@ while(hasAutoStopped == PicoConstants.FALSE && status.getStreamingLatestValues =
         
         % Clear variables for use again
         clear bufferChAmV;
+        clear bufferChBmV;
         clear firstValuePosn;
         clear lastValuePosn;
         clear startIndex;

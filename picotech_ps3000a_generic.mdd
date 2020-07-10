@@ -1564,7 +1564,7 @@ status - status code returned by the driver.</Description>
     status = calllib('ps3000a', 'ps3000aSetBandwidthFilter', ...
             obj.DriverData.unitHandle, channel, bandwidth);
 
-    if(status ~= PICO_OK)
+    if(status ~= PicoStatus.PICO_OK)
         
         if(status == PicoStatus.PICO_INVALID_CHANNEL)
 
